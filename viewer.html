@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- important for mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,45 +12,47 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
-      padding: 10px; /* allow spacing on small screens */
+      padding: 1rem;
     }
     .card {
       background: white;
-      padding: 2rem;
+      padding: 1.5rem;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 100%;             /* take full width on mobile */
-      max-width: 400px;        /* but don’t stretch too much on desktop */
+      width: 100%;
+      max-width: 400px;
       text-align: center;
     }
     input {
-      width: 100%;             /* full width for smaller screens */
+      width: 100%;
       padding: 10px;
       margin: 10px 0;
       border: 1px solid #ccc;
       border-radius: 6px;
-      box-sizing: border-box;
+      font-size: 1rem;
     }
     button {
-      width: 100%;             /* full width button on mobile */
-      padding: 10px;
+      padding: 12px;
+      width: 100%;
       background: #007BFF;
       border: none;
       color: white;
+      font-size: 1rem;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 16px;
     }
     button:hover {
       background: #0056b3;
     }
     video {
       width: 100%;
+      max-height: 50vh;
       margin-top: 15px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      background: black;
     }
   </style>
 </head>
@@ -58,7 +61,7 @@
     <h2>Viewer</h2>
     <input type="text" id="sessionInput" placeholder="Enter Session Code">
     <button id="joinBtn">Join</button>
-    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline muted></video>
   </div>
 
   <script type="module">
