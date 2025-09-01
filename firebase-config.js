@@ -1,16 +1,22 @@
-// Replace with your Firebase config from Firebase console
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+// firebase.js
 
+// ✅ Import Firebase modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// ✅ Your real Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "XXXXXX",
-  appId: "XXXXXX"
+  apiKey: "AIzaSyClRGnFk5duOztjsuOaUAWXZSF5j0acvVY",
+  authDomain: "screen-share-bcd1f.firebaseapp.com",
+  databaseURL: "https://screen-share-bcd1f-default-rtdb.firebaseio.com",
+  projectId: "screen-share-bcd1f",
+  storageBucket: "screen-share-bcd1f.firebasestorage.app",
+  messagingSenderId: "407756033348",
+  appId: "1:407756033348:web:76ba2ce5bb2d29ab9fdb11"
 };
 
+// ✅ Initialize Firebase
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 export const db = getDatabase(app);
