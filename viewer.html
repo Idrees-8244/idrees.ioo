@@ -1,78 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Viewer - Join Screen Share</title>
+  <meta charset="UTF-8">
+  <title>Join Screen Share</title>
 </head>
 <body>
-  <h2>Viewer - Join Screen</h2>
-  <input type="text" id="sessionInput" placeholder="Enter session code" />
+  <h2>Join Screen Sharing</h2>
+  <input id="sessionCode" placeholder="Enter Session Code">
   <button id="joinBtn">Join</button>
   <br><br>
-  <video id="remoteVideo" autoplay playsinline controls style="width:100%; max-width:600px;"></video>
+  <video id="remoteVideo" autoplay playsinline style="width:90%;border:1px solid #000;"></video>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getDatabase, ref, get, set, onChildAdded } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { getDatabase, ref, set, get, child, onChildAdded } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyClRGnFk5duOztjsuOaUAWXZSF5j0acvVY",
       authDomain: "screen-share-bcd1f.firebaseapp.com",
       databaseURL: "https://screen-share-bcd1f-default-rtdb.firebaseio.com",
       projectId: "screen-share-bcd1f",
-      storageBucket: "screen-share-bcd1f.firebasestorage.app",
-      messagingSenderId: "407756033348",
-      appId: "1:407756033348:web:76ba2ce5bb2d29ab9fdb11"
+      storageBucket: "screen-share-bcd1f.appspot.com",
+      messagingSenderId: "16113178925",
+      appId: "1:16113178925:web:fbd71b9d357ab74406459d"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
     const joinBtn = document.getElementById("joinBtn");
-    const sessionInput = document.getElementById("sessionInput");
+    const codeInput = document.getElementById("sessionCode");
     const remoteVideo = document.getElementById("remoteVideo");
 
     joinBtn.onclick = async () => {
-      const code = sessionInput.value.trim();
+      const code = codeInput.value.trim();
       if (!code) {
-        alert("Enter a session code");
+        alert("Please enter a code");
         return;
       }
 
-      try {
-        const pc = new RTCPeerConnection();
+      const pc = new RTCPeerConnection();
 
-        pc.ontrack = (event) => {
-          console.log("Remote stream received:", event.streams);
-          remoteVideo.srcObject = event.streams[0];
-        };
-
-        const snap = await get(ref(db, "sessions/" + code + "/offer"));
-        if (!snap.exists()) {
-          alert("Session not found");
-          return;
-        }
-
-        await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
-
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await set(ref(db, "sessions/" + code + "/answer"), answer);
-
-        onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
-          } catch (e) {
-            console.error("Error adding ICE candidate:", e);
-          }
+      // Play remote stream
+      pc.ontrack = (event) => {
+        remoteVideo.srcObject = event.streams[0];
+        remoteVideo.play().catch(err => {
+          console.log("Play blocked, tap video to start:", err);
         });
+      };
 
-        console.log("Joined session:", code);
-      } catch (err) {
-        console.error("Join error:", err);
-        alert("Error joining session: " + err.message);
+      // Add ICE candidates from host
+      onChildAdded(ref(db, `signaling/${code}/hostCandidates`), async (snap) => {
+        try {
+          const val = snap.val();
+          const cand = typeof val === "string" ? JSON.parse(val) : val;
+          await pc.addIceCandidate(new RTCIceCandidate(cand));
+        } catch (e) {
+          console.error("Error adding host candidate:", e);
+        }
+      });
+
+      // Get host offer
+      const snap = await get(child(ref(db), `signaling/${code}/offer`));
+      if (!snap.exists()) {
+        alert("Invalid session code");
+        return;
       }
+      const offer = snap.val();
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+      // Create answer
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await set(ref(db, `signaling/${code}/answer`), answer);
+
+      // Send viewer candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          set(ref(db, `signaling/${code}/viewerCandidates/${event.candidate.sdpMid}_${event.candidate.sdpMLineIndex}`),
+            JSON.stringify(event.candidate));
+        }
+      };
     };
   </script>
 </body>
