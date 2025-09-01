@@ -1,10 +1,49 @@
-<section id="live-screen">
-  <h2>Live Screen</h2>
-  <iframe
-    src="https://meet.jit.si/myscreenshare"
-    allow="camera; microphone; fullscreen; display-capture"
-    width="100%"
-    height="600"
-    style="border:0; border-radius:12px;">
-  </iframe>
-</section>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ScreenShare — Home</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:0; display:flex; align-items:center; justify-content:center; height:100vh; }
+    .card { background:white; padding:2rem; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-width:400px; text-align:center; }
+    .btn { display:block; padding:10px 15px; margin:10px 0; text-decoration:none; color:white; background:#007BFF; border-radius:6px; font-weight:bold; transition:.3s; }
+    .btn:hover { background:#0056b3; }
+    hr { margin:20px 0; }
+    ul { text-align:left; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>ScreenShare</h1>
+    <p>Choose a role:</p>
+    <div class="row">
+      <a class="btn" href="login.html">I'm an agent (login & share)</a>
+      <a class="btn" href="viewer.html">I'm a customer (enter code)</a>
+    </div>
+    <hr/>
+    <p>Notes:</p>
+    <ul>
+      <li>Agent logs in, generates a 6-digit code and starts sharing.</li>
+      <li>Customer enters the code on the viewer page to see the screen.</li>
+      <li>Firebase logic is centralized in <code>firebase-config.js</code></li>
+    </ul>
+  </div>
+
+  <!-- Tawk.to Script -->
+  <script type="text/javascript">
+  var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+  (function(){
+  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+  s1.async=true;
+  s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
+  s1.charset='UTF-8';
+  s1.setAttribute('crossorigin','*');
+  s0.parentNode.insertBefore(s1,s0);
+  })();
+  </script>
+  <!-- End of Tawk.to Script -->
+</body>
+</html>
+
