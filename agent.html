@@ -1,39 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Agent - Share Screen</title>
+  <meta charset="UTF-8">
+  <title>Agent Screen Share</title>
 </head>
 <body>
-  <h1>Agent Screen Share</h1>
-  <button id="startBtn">Start Session</button>
-  <p>Session Code: <span id="code"></span></p>
-  <script type="module">
-    import { db } from "./firebase-config.js";
-    import { ref, set, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+  <h2>Agent Screen Share</h2>
+  <button id="startShare">Start Screen Share</button>
+  <p>Session Code: <span id="sessionCode"></span></p>
+  <video id="preview" autoplay muted playsinline></video>
 
-    const startBtn = document.getElementById("startBtn");
-    const codeSpan = document.getElementById("code");
+  <script type="module">
+    import { db, auth } from "./firebase-config.js";
+    import { ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    onAuthStateChanged(auth, user => {
+      if (!user) window.location.href = "login.html";
+    });
+
+    const startBtn = document.getElementById("startShare");
+    const sessionEl = document.getElementById("sessionCode");
+    const preview = document.getElementById("preview");
 
     startBtn.onclick = async () => {
-      const pc = new RTCPeerConnection();
-      const code = Math.random().toString(36).substring(2, 8);
-      codeSpan.textContent = code;
-
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      preview.srcObject = stream;
+
+      const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      sessionEl.innerText = sessionCode;
+
+      const pc = new RTCPeerConnection();
+
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          push(ref(db, "sessions/" + code + "/candidates"), event.candidate.toJSON());
+          push(ref(db, "sessions/" + sessionCode + "/candidates"), event.candidate.toJSON());
         }
       };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      await set(ref(db, "sessions/" + code + "/offer"), offer);
+      await set(ref(db, "sessions/" + sessionCode + "/offer"), offer);
 
-      onChildAdded(ref(db, "sessions/" + code + "/answer"), async (snap) => {
-        if (snap.val()) {
+      onValue(ref(db, "sessions/" + sessionCode + "/answer"), async (snap) => {
+        if (snap.val() && !pc.currentRemoteDescription) {
           await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
         }
       });
