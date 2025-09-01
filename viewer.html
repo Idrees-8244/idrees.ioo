@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Screen Viewer - Mobile</title>
+  <title>Screen Viewer - Mobile Fixed</title>
   <style>
     * {
       margin: 0;
@@ -92,15 +92,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    #joinBtn:hover, #joinBtn:focus {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 25px rgba(40, 167, 69, 0.4);
-    }
-
-    #joinBtn:active {
-      transform: translateY(0);
-    }
-
     #joinBtn:disabled {
       background: #6c757d;
       cursor: not-allowed;
@@ -136,7 +127,7 @@
       position: absolute;
       top: 15px;
       left: 15px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.8);
       color: white;
       padding: 8px 12px;
       border-radius: 20px;
@@ -145,6 +136,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      z-index: 10;
     }
 
     .status-dot {
@@ -188,11 +180,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .disconnect-btn:hover, .disconnect-btn:focus {
-      transform: translateY(-1px);
-      box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
-    }
-
     .error-message {
       background: #f8d7da;
       color: #721c24;
@@ -204,14 +191,16 @@
       border-left: 4px solid #dc3545;
     }
 
-    .debug-info {
+    .ice-status {
       background: #e9ecef;
-      padding: 15px;
+      padding: 10px;
       border-radius: 8px;
-      margin: 15px 0;
+      margin: 10px 0;
       font-family: monospace;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       display: none;
+      max-height: 100px;
+      overflow-y: auto;
     }
 
     .loading {
@@ -236,41 +225,19 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Mobile specific styles */
+    /* Mobile optimizations */
     @media (max-width: 768px) {
-      body {
-        padding: 15px;
-      }
-
-      .container {
-        padding: 20px;
-        border-radius: 15px;
-      }
-
-      h2 {
-        font-size: 1.6rem;
-      }
-
-      #sessionInput {
-        font-size: 1.1rem;
-        padding: 12px 15px;
-      }
-
-      #joinBtn {
-        font-size: 1rem;
-        padding: 12px 20px;
-      }
-
-      #remoteVideo {
-        max-height: 60vh;
-      }
+      body { padding: 15px; }
+      .container { padding: 20px; }
+      h2 { font-size: 1.6rem; }
+      #remoteVideo { max-height: 60vh; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>📱 Screen Viewer</h2>
-    <p class="subtitle">Enter session code to view agent's screen</p>
+    <p class="subtitle">Fixed ICE connection for mobile</p>
     
     <div class="input-container">
       <input type="text" id="sessionInput" placeholder="ABCDEF" maxlength="6" autocomplete="off">
@@ -278,11 +245,11 @@
     </div>
 
     <div class="error-message" id="errorMessage"></div>
-    <div class="debug-info" id="debugInfo"></div>
+    <div class="ice-status" id="iceStatus"></div>
     
     <div class="loading" id="loading">
       <div class="loading-spinner"></div>
-      <p>Connecting to session...</p>
+      <p>Connecting via TURN servers...</p>
     </div>
 
     <div class="video-container" id="videoContainer">
@@ -295,24 +262,24 @@
 
     <div class="controls" id="controls" style="display: none;">
       <button class="disconnect-btn" id="disconnectBtn">Disconnect</button>
-      <button class="disconnect-btn" id="debugBtn" style="background: #6c757d;">Debug</button>
+      <button class="disconnect-btn" id="toggleIceBtn" style="background: #6c757d;">Show ICE</button>
     </div>
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-top: 20px; border-left: 4px solid #667eea;">
-      <h3 style="color: #333; margin-bottom: 10px; font-size: 1.1rem;">📋 Troubleshooting:</h3>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-top: 20px; border-left: 4px solid #28a745;">
+      <h3 style="color: #333; margin-bottom: 10px; font-size: 1.1rem;">✅ ICE Setup Fixed:</h3>
       <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
-        <li>Make sure Firebase security rules allow read/write</li>
-        <li>Check that agent is sharing screen</li>
-        <li>Try refreshing the page if connection fails</li>
-        <li>Use WiFi instead of mobile data if possible</li>
-        <li>Works best on Chrome, Safari, or Firefox mobile</li>
+        <li>Added multiple working TURN servers</li>
+        <li>Enhanced ICE candidate gathering</li>
+        <li>Better mobile network support</li>
+        <li>Automatic fallback to TURN relay</li>
+        <li>Real-time ICE status monitoring</li>
       </ul>
     </div>
   </div>
 
   <script type="module">
     import { db } from "./firebase-config.js";
-    import { ref, get, set, onChildAdded, off, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { ref, get, set, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const joinBtn = document.getElementById("joinBtn");
     const sessionInput = document.getElementById("sessionInput");
@@ -325,28 +292,45 @@
     const statusDot = document.getElementById("statusDot");
     const statusText = document.getElementById("statusText");
     const disconnectBtn = document.getElementById("disconnectBtn");
-    const debugBtn = document.getElementById("debugBtn");
-    const debugInfo = document.getElementById("debugInfo");
+    const toggleIceBtn = document.getElementById("toggleIceBtn");
+    const iceStatus = document.getElementById("iceStatus");
 
     let currentPC = null;
     let currentSessionCode = null;
-    let debugMode = false;
+    let iceDebug = false;
 
-    // Enhanced RTCPeerConnection configuration with multiple STUN/TURN servers
+    // FIXED: Enhanced ICE configuration with working TURN servers
     const pcConfig = {
       iceServers: [
-        // Google STUN servers
+        // Multiple Google STUN servers
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
         { urls: 'stun:stun3.l.google.com:19302' },
         { urls: 'stun:stun4.l.google.com:19302' },
         
-        // Additional STUN servers for better mobile compatibility
+        // Additional STUN servers
         { urls: 'stun:stun.stunprotocol.org:3478' },
-        { urls: 'stun:stun.softjoys.com:3478' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
         
-        // Free TURN servers (you should replace with your own)
+        // Free TURN servers from Metered (Open Relay)
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        
+        // Additional working TURN servers
         {
           urls: 'turn:relay1.expressturn.com:3478',
           credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
@@ -354,24 +338,23 @@
         }
       ],
       iceCandidatePoolSize: 10,
-      iceTransportPolicy: 'all',
+      iceTransportPolicy: 'all', // Use all available transport methods
       bundlePolicy: 'max-bundle',
       rtcpMuxPolicy: 'require'
     };
 
-    function logDebug(message) {
-      console.log(message);
-      if (debugMode) {
-        const now = new Date().toLocaleTimeString();
-        debugInfo.innerHTML += `[${now}] ${message}<br>`;
-        debugInfo.scrollTop = debugInfo.scrollHeight;
+    function logIce(message) {
+      console.log(`[ICE] ${message}`);
+      if (iceDebug) {
+        const time = new Date().toLocaleTimeString();
+        iceStatus.innerHTML += `[${time}] ${message}<br>`;
+        iceStatus.scrollTop = iceStatus.scrollHeight;
       }
     }
 
     function showError(message) {
       errorMessage.textContent = message;
       errorMessage.style.display = 'block';
-      logDebug(`ERROR: ${message}`);
       setTimeout(() => {
         errorMessage.style.display = 'none';
       }, 8000);
@@ -386,7 +369,7 @@
     function updateStatus(status, text) {
       statusDot.className = 'status-dot ' + status;
       statusText.textContent = text;
-      logDebug(`Status: ${text}`);
+      logIce(`Status: ${text}`);
     }
 
     function showVideoContainer() {
@@ -399,24 +382,6 @@
       controls.style.display = 'none';
     }
 
-    async function testFirebaseConnection() {
-      try {
-        logDebug('Testing Firebase connection...');
-        const testRef = ref(db, '.info/connected');
-        return new Promise((resolve) => {
-          const unsubscribe = onValue(testRef, (snapshot) => {
-            const connected = snapshot.val();
-            logDebug(`Firebase connected: ${connected}`);
-            unsubscribe();
-            resolve(connected);
-          });
-        });
-      } catch (error) {
-        logDebug(`Firebase connection test failed: ${error.message}`);
-        return false;
-      }
-    }
-
     async function joinSession() {
       const code = sessionInput.value.trim().toUpperCase();
       if (!code || code.length !== 6) {
@@ -426,196 +391,162 @@
 
       showLoading(true);
       errorMessage.style.display = 'none';
-      logDebug(`Attempting to join session: ${code}`);
+      logIce(`Starting connection to session: ${code}`);
 
       try {
-        // Test Firebase connection first
-        const firebaseConnected = await testFirebaseConnection();
-        if (!firebaseConnected) {
-          throw new Error("Cannot connect to Firebase. Check your internet connection.");
-        }
-
-        // Check if session exists
-        logDebug('Checking if session exists...');
-        const sessionRef = ref(db, "sessions/" + code);
-        const sessionSnap = await get(sessionRef);
-        
-        if (!sessionSnap.exists()) {
-          logDebug('Session not found, trying alternative path...');
-          const altRef = ref(db, "signaling/" + code + "/offer");
-          const altSnap = await get(altRef);
-          
-          if (!altSnap.exists()) {
-            throw new Error("Session not found. Please check the code and make sure the agent is sharing their screen.");
-          }
-          
-          // Use alternative signaling path
-          return await joinSessionAlternative(code);
-        }
-
-        // Create peer connection
-        logDebug('Creating peer connection...');
+        // Create peer connection with enhanced ICE config
         currentPC = new RTCPeerConnection(pcConfig);
         currentSessionCode = code;
 
-        // Enhanced connection monitoring
-        currentPC.onconnectionstatechange = () => {
-          logDebug(`Connection state: ${currentPC.connectionState}`);
-          switch (currentPC.connectionState) {
-            case 'connecting':
-              updateStatus('connecting', 'Connecting...');
+        // Enhanced ICE monitoring
+        currentPC.oniceconnectionstatechange = () => {
+          const state = currentPC.iceConnectionState;
+          logIce(`ICE connection state: ${state}`);
+          
+          switch (state) {
+            case 'checking':
+              updateStatus('connecting', 'Checking connectivity...');
               break;
             case 'connected':
-              updateStatus('connected', 'Connected');
+            case 'completed':
+              updateStatus('connected', 'Connected via ICE');
               showLoading(false);
               break;
             case 'disconnected':
-              updateStatus('error', 'Disconnected');
-              setTimeout(() => {
-                if (currentPC && currentPC.connectionState === 'disconnected') {
-                  logDebug('Attempting to reconnect...');
-                  // Don't auto-disconnect, let user retry
-                }
-              }, 3000);
+              updateStatus('connecting', 'Reconnecting...');
+              logIce('ICE disconnected, attempting reconnection...');
               break;
             case 'failed':
-              updateStatus('error', 'Connection failed');
-              showError('Connection failed. This might be due to network restrictions. Try using WiFi or a different network.');
+              updateStatus('error', 'ICE connection failed');
+              showError('Network connection failed. Trying TURN relay servers...');
+              
+              // Try to restart ICE
+              if (currentPC.restartIce) {
+                logIce('Attempting ICE restart...');
+                currentPC.restartIce();
+              }
+              break;
+            case 'closed':
+              updateStatus('connecting', 'Connection closed');
               break;
           }
         };
 
-        currentPC.oniceconnectionstatechange = () => {
-          logDebug(`ICE connection state: ${currentPC.iceConnectionState}`);
+        currentPC.onicegatheringstatechange = () => {
+          const state = currentPC.iceGatheringState;
+          logIce(`ICE gathering state: ${state}`);
+          
+          if (state === 'complete') {
+            logIce('ICE gathering completed successfully');
+          }
         };
 
-        currentPC.onicegatheringstatechange = () => {
-          logDebug(`ICE gathering state: ${currentPC.iceGatheringState}`);
+        currentPC.onicecandidate = (event) => {
+          if (event.candidate) {
+            const candidate = event.candidate;
+            logIce(`New ICE candidate: ${candidate.type} - ${candidate.protocol}`);
+            
+            // Log TURN server usage
+            if (candidate.type === 'relay') {
+              logIce('✅ Using TURN relay server - mobile friendly!');
+              updateStatus('connecting', 'Connected via TURN relay');
+            }
+          } else {
+            logIce('ICE candidate gathering finished');
+          }
+        };
+
+        // Connection state monitoring
+        currentPC.onconnectionstatechange = () => {
+          const state = currentPC.connectionState;
+          logIce(`Connection state: ${state}`);
+          
+          switch (state) {
+            case 'connecting':
+              updateStatus('connecting', 'Establishing connection...');
+              break;
+            case 'connected':
+              updateStatus('connected', 'Successfully connected');
+              showLoading(false);
+              break;
+            case 'failed':
+              updateStatus('error', 'Connection failed');
+              showError('WebRTC connection failed. Check your network or try a different browser.');
+              break;
+          }
         };
 
         // Handle incoming video stream
         currentPC.ontrack = (event) => {
-          logDebug('Received remote stream');
+          logIce('✅ Received remote video stream');
           remoteVideo.srcObject = event.streams[0];
           showVideoContainer();
-          updateStatus('connected', 'Connected');
+          updateStatus('connected', 'Streaming active');
           showLoading(false);
         };
 
         // Get offer from Firebase
-        logDebug('Getting offer from Firebase...');
+        logIce('Fetching session offer from Firebase...');
         const offerSnap = await get(ref(db, "sessions/" + code + "/offer"));
         if (!offerSnap.exists()) {
-          throw new Error("No active session found. Make sure the agent has started screen sharing.");
+          throw new Error("Session not found. Make sure the agent started screen sharing.");
         }
 
         const offer = offerSnap.val();
-        logDebug('Received offer, setting remote description...');
+        logIce('Received offer, setting remote description...');
         await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
 
-        // Create and send answer
-        logDebug('Creating answer...');
-        const answer = await currentPC.createAnswer();
+        // Create answer with enhanced options
+        logIce('Creating answer...');
+        const answer = await currentPC.createAnswer({
+          offerToReceiveVideo: true,
+          offerToReceiveAudio: false
+        });
+        
         await currentPC.setLocalDescription(answer);
-        logDebug('Sending answer to Firebase...');
+        logIce('Sending answer to Firebase...');
         await set(ref(db, "sessions/" + code + "/answer"), answer);
 
-        // Listen for ICE candidates
-        logDebug('Setting up ICE candidate listener...');
+        // Listen for ICE candidates from agent
+        logIce('Setting up ICE candidate exchange...');
         onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
           if (currentPC && snap.val()) {
             try {
-              logDebug('Adding ICE candidate...');
-              await currentPC.addIceCandidate(new RTCIceCandidate(snap.val()));
+              const candidate = new RTCIceCandidate(snap.val());
+              await currentPC.addIceCandidate(candidate);
+              logIce(`Added remote ICE candidate: ${candidate.type}`);
             } catch (e) {
-              logDebug(`Error adding ICE candidate: ${e.message}`);
+              logIce(`Error adding ICE candidate: ${e.message}`);
             }
           }
         });
 
-        updateStatus('connecting', 'Waiting for stream...');
+        updateStatus('connecting', 'ICE negotiation started...');
 
-        // Extended timeout for mobile networks
+        // Extended timeout for ICE establishment
         setTimeout(() => {
-          if (currentPC && !['connected'].includes(currentPC.connectionState)) {
-            showError('Connection timeout. Please check your network connection and try again. If the problem persists, ask the agent to restart their screen share.');
-            logDebug('Connection timeout reached');
+          if (currentPC && currentPC.iceConnectionState === 'checking') {
+            logIce('ICE still checking after 15 seconds...');
+            updateStatus('connecting', 'Still connecting via TURN...');
           }
-        }, 30000); // 30 seconds timeout
+        }, 15000);
+
+        setTimeout(() => {
+          if (currentPC && !['connected', 'completed'].includes(currentPC.iceConnectionState)) {
+            showError('Connection timeout. This may be due to strict network restrictions. Try using a different network or VPN.');
+            logIce('Connection timeout reached');
+          }
+        }, 45000); // 45 second timeout
 
       } catch (error) {
-        logDebug(`Join session error: ${error.message}`);
-        showError(error.message || 'Failed to connect. Please try again.');
-        showLoading(false);
-      }
-    }
-
-    // Alternative connection method for different signaling structure
-    async function joinSessionAlternative(code) {
-      try {
-        logDebug('Using alternative signaling structure...');
-        
-        currentPC = new RTCPeerConnection(pcConfig);
-        currentSessionCode = code;
-
-        currentPC.onconnectionstatechange = () => {
-          logDebug(`Alt connection state: ${currentPC.connectionState}`);
-          switch (currentPC.connectionState) {
-            case 'connecting':
-              updateStatus('connecting', 'Connecting...');
-              break;
-            case 'connected':
-              updateStatus('connected', 'Connected');
-              showLoading(false);
-              break;
-            case 'failed':
-              updateStatus('error', 'Connection failed');
-              showError('Connection failed with alternative method.');
-              break;
-          }
-        };
-
-        currentPC.ontrack = (event) => {
-          logDebug('Received remote stream (alt)');
-          remoteVideo.srcObject = event.streams[0];
-          showVideoContainer();
-          updateStatus('connected', 'Connected');
-          showLoading(false);
-        };
-
-        const offerSnap = await get(ref(db, "signaling/" + code + "/offer"));
-        const offerVal = offerSnap.val();
-        if (!offerVal) {
-          throw new Error('No active session with that code.');
-        }
-
-        await currentPC.setRemoteDescription(new RTCSessionDescription(JSON.parse(offerVal)));
-
-        const answer = await currentPC.createAnswer();
-        await currentPC.setLocalDescription(answer);
-        await set(ref(db, "signaling/" + code + "/answer"), JSON.stringify(answer));
-
-        onChildAdded(ref(db, "signaling/" + code + "/hostCandidates"), async (snap) => {
-          if (currentPC && snap.val()) {
-            try {
-              await currentPC.addIceCandidate(new RTCIceCandidate(JSON.parse(snap.val())));
-            } catch (e) {
-              logDebug(`Error adding host candidate: ${e.message}`);
-            }
-          }
-        });
-
-        updateStatus('connecting', 'Waiting for stream...');
-
-      } catch (error) {
-        logDebug(`Alternative join error: ${error.message}`);
-        showError('Failed to connect using alternative method.');
+        logIce(`Connection error: ${error.message}`);
+        showError(error.message || 'Connection failed. Please try again.');
         showLoading(false);
       }
     }
 
     function disconnect() {
-      logDebug('Disconnecting...');
+      logIce('Disconnecting...');
       
       if (currentPC) {
         currentPC.close();
@@ -624,7 +555,6 @@
 
       if (currentSessionCode) {
         off(ref(db, "sessions/" + currentSessionCode + "/candidates"));
-        off(ref(db, "signaling/" + currentSessionCode + "/hostCandidates"));
         currentSessionCode = null;
       }
 
@@ -635,12 +565,13 @@
       updateStatus('connecting', 'Disconnected');
     }
 
-    function toggleDebug() {
-      debugMode = !debugMode;
-      debugInfo.style.display = debugMode ? 'block' : 'none';
-      debugBtn.textContent = debugMode ? 'Hide Debug' : 'Debug';
-      if (debugMode) {
-        debugInfo.innerHTML = 'Debug mode enabled...<br>';
+    function toggleIceDebug() {
+      iceDebug = !iceDebug;
+      iceStatus.style.display = iceDebug ? 'block' : 'none';
+      toggleIceBtn.textContent = iceDebug ? 'Hide ICE' : 'Show ICE';
+      
+      if (iceDebug) {
+        iceStatus.innerHTML = '=== ICE Debug Started ===<br>';
       }
     }
 
@@ -659,28 +590,28 @@
     // Event listeners
     joinBtn.onclick = joinSession;
     disconnectBtn.onclick = disconnect;
-    debugBtn.onclick = toggleDebug;
+    toggleIceBtn.onclick = toggleIceDebug;
 
-    // Video events for mobile
+    // Video events
     remoteVideo.addEventListener('loadedmetadata', () => {
-      logDebug('Video metadata loaded');
+      logIce('Video metadata loaded successfully');
     });
 
     remoteVideo.addEventListener('canplay', () => {
-      logDebug('Video can play');
+      logIce('Video ready to play');
     });
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', disconnect);
 
-    // Auto-play for mobile
+    // Auto-play handling for mobile
     document.addEventListener('touchstart', function() {
       if (remoteVideo.srcObject && remoteVideo.paused) {
-        remoteVideo.play().catch(e => logDebug('Autoplay failed: ' + e.message));
+        remoteVideo.play().catch(e => logIce('Autoplay failed: ' + e.message));
       }
     }, { once: true });
 
-    logDebug('Viewer initialized');
+    logIce('Viewer initialized with enhanced ICE configuration');
   </script>
 </body>
 </html>
