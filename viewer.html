@@ -115,6 +115,11 @@
       background: #000;
       position: relative;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+
+    .video-container.active {
+      display: block;
     }
 
     #remoteVideo {
@@ -163,26 +168,6 @@
       50% { opacity: 0.5; }
     }
 
-    .fullscreen-btn {
-      position: absolute;
-      bottom: 15px;
-      right: 15px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1.2rem;
-      transition: all 0.3s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .fullscreen-btn:hover, .fullscreen-btn:focus {
-      background: rgba(0, 0, 0, 0.9);
-      transform: scale(1.1);
-    }
-
     .controls {
       display: flex;
       justify-content: center;
@@ -191,8 +176,10 @@
       flex-wrap: wrap;
     }
 
-    .control-btn {
+    .disconnect-btn {
       padding: 10px 20px;
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      color: white;
       border: none;
       border-radius: 8px;
       font-weight: 600;
@@ -201,38 +188,9 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .disconnect-btn {
-      background: linear-gradient(135deg, #dc3545, #c82333);
-      color: white;
-    }
-
     .disconnect-btn:hover, .disconnect-btn:focus {
       transform: translateY(-1px);
       box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
-    }
-
-    .instructions {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 12px;
-      margin: 20px 0;
-      border-left: 4px solid #667eea;
-    }
-
-    .instructions h3 {
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 1.1rem;
-    }
-
-    .instructions ul {
-      color: #666;
-      line-height: 1.6;
-      padding-left: 20px;
-    }
-
-    .instructions li {
-      margin-bottom: 5px;
     }
 
     .error-message {
@@ -246,10 +204,21 @@
       border-left: 4px solid #dc3545;
     }
 
+    .debug-info {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-family: monospace;
+      font-size: 0.9rem;
+      display: none;
+    }
+
     .loading {
       text-align: center;
       padding: 20px;
       color: #666;
+      display: none;
     }
 
     .loading-spinner {
@@ -295,64 +264,6 @@
       #remoteVideo {
         max-height: 60vh;
       }
-
-      .status-bar {
-        font-size: 0.8rem;
-        padding: 6px 10px;
-      }
-
-      .fullscreen-btn {
-        padding: 10px;
-        font-size: 1rem;
-      }
-
-      .instructions {
-        padding: 15px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 10px;
-      }
-
-      .container {
-        padding: 15px;
-      }
-
-      h2 {
-        font-size: 1.4rem;
-      }
-
-      .subtitle {
-        font-size: 1rem;
-      }
-
-      #remoteVideo {
-        min-height: 150px;
-        max-height: 50vh;
-      }
-    }
-
-    /* iOS Safari specific fixes */
-    @supports (-webkit-touch-callout: none) {
-      #remoteVideo {
-        -webkit-playsinline: true;
-      }
-      
-      .video-container {
-        -webkit-transform: translateZ(0);
-        transform: translateZ(0);
-      }
-    }
-
-    /* Hide video container initially */
-    .video-container {
-      display: none;
-    }
-
-    .video-container.active {
-      display: block;
     }
   </style>
 </head>
@@ -367,8 +278,9 @@
     </div>
 
     <div class="error-message" id="errorMessage"></div>
+    <div class="debug-info" id="debugInfo"></div>
     
-    <div class="loading" id="loading" style="display: none;">
+    <div class="loading" id="loading">
       <div class="loading-spinner"></div>
       <p>Connecting to session...</p>
     </div>
@@ -379,28 +291,28 @@
         <span id="statusText">Connecting...</span>
       </div>
       <video id="remoteVideo" autoplay playsinline muted controls></video>
-      <button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
     </div>
 
     <div class="controls" id="controls" style="display: none;">
-      <button class="control-btn disconnect-btn" id="disconnectBtn">Disconnect</button>
+      <button class="disconnect-btn" id="disconnectBtn">Disconnect</button>
+      <button class="disconnect-btn" id="debugBtn" style="background: #6c757d;">Debug</button>
     </div>
 
-    <div class="instructions">
-      <h3>📋 How to use:</h3>
-      <ul>
-        <li>Get the 6-digit session code from your agent</li>
-        <li>Enter the code above and tap Connect</li>
-        <li>The agent's screen will appear below</li>
-        <li>Tap fullscreen button for better viewing</li>
-        <li>Works on all mobile browsers</li>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-top: 20px; border-left: 4px solid #667eea;">
+      <h3 style="color: #333; margin-bottom: 10px; font-size: 1.1rem;">📋 Troubleshooting:</h3>
+      <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
+        <li>Make sure Firebase security rules allow read/write</li>
+        <li>Check that agent is sharing screen</li>
+        <li>Try refreshing the page if connection fails</li>
+        <li>Use WiFi instead of mobile data if possible</li>
+        <li>Works best on Chrome, Safari, or Firefox mobile</li>
       </ul>
     </div>
   </div>
 
   <script type="module">
     import { db } from "./firebase-config.js";
-    import { ref, get, set, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { ref, get, set, onChildAdded, off, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const joinBtn = document.getElementById("joinBtn");
     const sessionInput = document.getElementById("sessionInput");
@@ -413,28 +325,56 @@
     const statusDot = document.getElementById("statusDot");
     const statusText = document.getElementById("statusText");
     const disconnectBtn = document.getElementById("disconnectBtn");
-    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const debugBtn = document.getElementById("debugBtn");
+    const debugInfo = document.getElementById("debugInfo");
 
     let currentPC = null;
     let currentSessionCode = null;
+    let debugMode = false;
 
-    // Enhanced RTCPeerConnection configuration for mobile
+    // Enhanced RTCPeerConnection configuration with multiple STUN/TURN servers
     const pcConfig = {
       iceServers: [
+        // Google STUN servers
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun.stunprotocol.org:3478' }
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        
+        // Additional STUN servers for better mobile compatibility
+        { urls: 'stun:stun.stunprotocol.org:3478' },
+        { urls: 'stun:stun.softjoys.com:3478' },
+        
+        // Free TURN servers (you should replace with your own)
+        {
+          urls: 'turn:relay1.expressturn.com:3478',
+          credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+          username: 'efJYLJOKKLYAJXGHKLP3A22PBBDDTSSXTEH'
+        }
       ],
-      iceCandidatePoolSize: 10
+      iceCandidatePoolSize: 10,
+      iceTransportPolicy: 'all',
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
     };
+
+    function logDebug(message) {
+      console.log(message);
+      if (debugMode) {
+        const now = new Date().toLocaleTimeString();
+        debugInfo.innerHTML += `[${now}] ${message}<br>`;
+        debugInfo.scrollTop = debugInfo.scrollHeight;
+      }
+    }
 
     function showError(message) {
       errorMessage.textContent = message;
       errorMessage.style.display = 'block';
+      logDebug(`ERROR: ${message}`);
       setTimeout(() => {
         errorMessage.style.display = 'none';
-      }, 5000);
+      }, 8000);
     }
 
     function showLoading(show) {
@@ -446,6 +386,7 @@
     function updateStatus(status, text) {
       statusDot.className = 'status-dot ' + status;
       statusText.textContent = text;
+      logDebug(`Status: ${text}`);
     }
 
     function showVideoContainer() {
@@ -458,6 +399,24 @@
       controls.style.display = 'none';
     }
 
+    async function testFirebaseConnection() {
+      try {
+        logDebug('Testing Firebase connection...');
+        const testRef = ref(db, '.info/connected');
+        return new Promise((resolve) => {
+          const unsubscribe = onValue(testRef, (snapshot) => {
+            const connected = snapshot.val();
+            logDebug(`Firebase connected: ${connected}`);
+            unsubscribe();
+            resolve(connected);
+          });
+        });
+      } catch (error) {
+        logDebug(`Firebase connection test failed: ${error.message}`);
+        return false;
+      }
+    }
+
     async function joinSession() {
       const code = sessionInput.value.trim().toUpperCase();
       if (!code || code.length !== 6) {
@@ -467,82 +426,197 @@
 
       showLoading(true);
       errorMessage.style.display = 'none';
+      logDebug(`Attempting to join session: ${code}`);
 
       try {
+        // Test Firebase connection first
+        const firebaseConnected = await testFirebaseConnection();
+        if (!firebaseConnected) {
+          throw new Error("Cannot connect to Firebase. Check your internet connection.");
+        }
+
+        // Check if session exists
+        logDebug('Checking if session exists...');
+        const sessionRef = ref(db, "sessions/" + code);
+        const sessionSnap = await get(sessionRef);
+        
+        if (!sessionSnap.exists()) {
+          logDebug('Session not found, trying alternative path...');
+          const altRef = ref(db, "signaling/" + code + "/offer");
+          const altSnap = await get(altRef);
+          
+          if (!altSnap.exists()) {
+            throw new Error("Session not found. Please check the code and make sure the agent is sharing their screen.");
+          }
+          
+          // Use alternative signaling path
+          return await joinSessionAlternative(code);
+        }
+
         // Create peer connection
+        logDebug('Creating peer connection...');
         currentPC = new RTCPeerConnection(pcConfig);
         currentSessionCode = code;
 
-        // Handle incoming video stream
-        currentPC.ontrack = (event) => {
-          console.log('Received remote stream');
-          remoteVideo.srcObject = event.streams[0];
-          showVideoContainer();
-          updateStatus('connected', 'Connected');
-          showLoading(false);
-        };
-
-        // Monitor connection state
+        // Enhanced connection monitoring
         currentPC.onconnectionstatechange = () => {
-          console.log('Connection state:', currentPC.connectionState);
+          logDebug(`Connection state: ${currentPC.connectionState}`);
           switch (currentPC.connectionState) {
             case 'connecting':
               updateStatus('connecting', 'Connecting...');
               break;
             case 'connected':
               updateStatus('connected', 'Connected');
+              showLoading(false);
               break;
             case 'disconnected':
+              updateStatus('error', 'Disconnected');
+              setTimeout(() => {
+                if (currentPC && currentPC.connectionState === 'disconnected') {
+                  logDebug('Attempting to reconnect...');
+                  // Don't auto-disconnect, let user retry
+                }
+              }, 3000);
+              break;
             case 'failed':
-              updateStatus('error', 'Connection lost');
-              showError('Connection failed. Please try again.');
-              disconnect();
+              updateStatus('error', 'Connection failed');
+              showError('Connection failed. This might be due to network restrictions. Try using WiFi or a different network.');
               break;
           }
         };
 
+        currentPC.oniceconnectionstatechange = () => {
+          logDebug(`ICE connection state: ${currentPC.iceConnectionState}`);
+        };
+
+        currentPC.onicegatheringstatechange = () => {
+          logDebug(`ICE gathering state: ${currentPC.iceGatheringState}`);
+        };
+
+        // Handle incoming video stream
+        currentPC.ontrack = (event) => {
+          logDebug('Received remote stream');
+          remoteVideo.srcObject = event.streams[0];
+          showVideoContainer();
+          updateStatus('connected', 'Connected');
+          showLoading(false);
+        };
+
         // Get offer from Firebase
-        const snap = await get(ref(db, "sessions/" + code + "/offer"));
-        if (!snap.exists()) {
-          throw new Error("Session not found. Please check the code.");
+        logDebug('Getting offer from Firebase...');
+        const offerSnap = await get(ref(db, "sessions/" + code + "/offer"));
+        if (!offerSnap.exists()) {
+          throw new Error("No active session found. Make sure the agent has started screen sharing.");
         }
 
-        await currentPC.setRemoteDescription(new RTCSessionDescription(snap.val()));
+        const offer = offerSnap.val();
+        logDebug('Received offer, setting remote description...');
+        await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
 
         // Create and send answer
+        logDebug('Creating answer...');
         const answer = await currentPC.createAnswer();
         await currentPC.setLocalDescription(answer);
+        logDebug('Sending answer to Firebase...');
         await set(ref(db, "sessions/" + code + "/answer"), answer);
 
         // Listen for ICE candidates
+        logDebug('Setting up ICE candidate listener...');
         onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
           if (currentPC && snap.val()) {
             try {
+              logDebug('Adding ICE candidate...');
               await currentPC.addIceCandidate(new RTCIceCandidate(snap.val()));
             } catch (e) {
-              console.error("Error adding candidate:", e);
+              logDebug(`Error adding ICE candidate: ${e.message}`);
             }
           }
         });
 
         updateStatus('connecting', 'Waiting for stream...');
 
-        // Connection timeout
+        // Extended timeout for mobile networks
         setTimeout(() => {
-          if (currentPC && currentPC.connectionState !== 'connected') {
-            showError('Connection timeout. Please try again.');
-            disconnect();
+          if (currentPC && !['connected'].includes(currentPC.connectionState)) {
+            showError('Connection timeout. Please check your network connection and try again. If the problem persists, ask the agent to restart their screen share.');
+            logDebug('Connection timeout reached');
           }
-        }, 15000);
+        }, 30000); // 30 seconds timeout
 
       } catch (error) {
-        console.error('Join error:', error);
+        logDebug(`Join session error: ${error.message}`);
         showError(error.message || 'Failed to connect. Please try again.');
         showLoading(false);
       }
     }
 
+    // Alternative connection method for different signaling structure
+    async function joinSessionAlternative(code) {
+      try {
+        logDebug('Using alternative signaling structure...');
+        
+        currentPC = new RTCPeerConnection(pcConfig);
+        currentSessionCode = code;
+
+        currentPC.onconnectionstatechange = () => {
+          logDebug(`Alt connection state: ${currentPC.connectionState}`);
+          switch (currentPC.connectionState) {
+            case 'connecting':
+              updateStatus('connecting', 'Connecting...');
+              break;
+            case 'connected':
+              updateStatus('connected', 'Connected');
+              showLoading(false);
+              break;
+            case 'failed':
+              updateStatus('error', 'Connection failed');
+              showError('Connection failed with alternative method.');
+              break;
+          }
+        };
+
+        currentPC.ontrack = (event) => {
+          logDebug('Received remote stream (alt)');
+          remoteVideo.srcObject = event.streams[0];
+          showVideoContainer();
+          updateStatus('connected', 'Connected');
+          showLoading(false);
+        };
+
+        const offerSnap = await get(ref(db, "signaling/" + code + "/offer"));
+        const offerVal = offerSnap.val();
+        if (!offerVal) {
+          throw new Error('No active session with that code.');
+        }
+
+        await currentPC.setRemoteDescription(new RTCSessionDescription(JSON.parse(offerVal)));
+
+        const answer = await currentPC.createAnswer();
+        await currentPC.setLocalDescription(answer);
+        await set(ref(db, "signaling/" + code + "/answer"), JSON.stringify(answer));
+
+        onChildAdded(ref(db, "signaling/" + code + "/hostCandidates"), async (snap) => {
+          if (currentPC && snap.val()) {
+            try {
+              await currentPC.addIceCandidate(new RTCIceCandidate(JSON.parse(snap.val())));
+            } catch (e) {
+              logDebug(`Error adding host candidate: ${e.message}`);
+            }
+          }
+        });
+
+        updateStatus('connecting', 'Waiting for stream...');
+
+      } catch (error) {
+        logDebug(`Alternative join error: ${error.message}`);
+        showError('Failed to connect using alternative method.');
+        showLoading(false);
+      }
+    }
+
     function disconnect() {
+      logDebug('Disconnecting...');
+      
       if (currentPC) {
         currentPC.close();
         currentPC = null;
@@ -550,6 +624,7 @@
 
       if (currentSessionCode) {
         off(ref(db, "sessions/" + currentSessionCode + "/candidates"));
+        off(ref(db, "signaling/" + currentSessionCode + "/hostCandidates"));
         currentSessionCode = null;
       }
 
@@ -558,6 +633,15 @@
       showLoading(false);
       sessionInput.value = '';
       updateStatus('connecting', 'Disconnected');
+    }
+
+    function toggleDebug() {
+      debugMode = !debugMode;
+      debugInfo.style.display = debugMode ? 'block' : 'none';
+      debugBtn.textContent = debugMode ? 'Hide Debug' : 'Debug';
+      if (debugMode) {
+        debugInfo.innerHTML = 'Debug mode enabled...<br>';
+      }
     }
 
     // Auto-format input
@@ -575,45 +659,28 @@
     // Event listeners
     joinBtn.onclick = joinSession;
     disconnectBtn.onclick = disconnect;
-
-    // Fullscreen functionality
-    fullscreenBtn.onclick = () => {
-      if (remoteVideo.requestFullscreen) {
-        remoteVideo.requestFullscreen();
-      } else if (remoteVideo.webkitRequestFullscreen) {
-        remoteVideo.webkitRequestFullscreen();
-      } else if (remoteVideo.mozRequestFullScreen) {
-        remoteVideo.mozRequestFullScreen();
-      } else if (remoteVideo.msRequestFullscreen) {
-        remoteVideo.msRequestFullscreen();
-      }
-    };
+    debugBtn.onclick = toggleDebug;
 
     // Video events for mobile
     remoteVideo.addEventListener('loadedmetadata', () => {
-      console.log('Video metadata loaded');
+      logDebug('Video metadata loaded');
     });
 
     remoteVideo.addEventListener('canplay', () => {
-      console.log('Video can play');
+      logDebug('Video can play');
     });
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', disconnect);
 
-    // Mobile-specific video handling
-    remoteVideo.addEventListener('click', () => {
-      if (remoteVideo.paused) {
-        remoteVideo.play();
-      }
-    });
-
-    // Auto-play for mobile (with user gesture)
+    // Auto-play for mobile
     document.addEventListener('touchstart', function() {
       if (remoteVideo.srcObject && remoteVideo.paused) {
-        remoteVideo.play().catch(e => console.log('Autoplay failed:', e));
+        remoteVideo.play().catch(e => logDebug('Autoplay failed: ' + e.message));
       }
     }, { once: true });
+
+    logDebug('Viewer initialized');
   </script>
 </body>
 </html>
