@@ -1,61 +1,619 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Viewer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Screen Viewer - Mobile</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+      font-size: 2rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1.1rem;
+    }
+
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 30px;
+      align-items: center;
+    }
+
+    #sessionInput {
+      width: 100%;
+      max-width: 300px;
+      padding: 15px 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 2px;
+      border: 3px solid #e1e5e9;
+      border-radius: 12px;
+      background: white;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      outline: none;
+    }
+
+    #sessionInput:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+    }
+
+    #joinBtn {
+      width: 100%;
+      max-width: 300px;
+      padding: 15px 25px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #joinBtn:hover, #joinBtn:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(40, 167, 69, 0.4);
+    }
+
+    #joinBtn:active {
+      transform: translateY(0);
+    }
+
+    #joinBtn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .video-container {
+      margin-top: 20px;
+      border-radius: 15px;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    #remoteVideo {
+      width: 100%;
+      height: auto;
+      min-height: 200px;
+      max-height: 70vh;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+
+    .status-bar {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #28a745;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connecting {
+      background: #ffc107;
+    }
+
+    .status-dot.error {
+      background: #dc3545;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .fullscreen-btn {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .fullscreen-btn:hover, .fullscreen-btn:focus {
+      background: rgba(0, 0, 0, 0.9);
+      transform: scale(1.1);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .disconnect-btn {
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      color: white;
+    }
+
+    .disconnect-btn:hover, .disconnect-btn:focus {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+    }
+
+    .instructions {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      border-left: 4px solid #667eea;
+    }
+
+    .instructions h3 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    .instructions ul {
+      color: #666;
+      line-height: 1.6;
+      padding-left: 20px;
+    }
+
+    .instructions li {
+      margin-bottom: 5px;
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: none;
+      text-align: center;
+      border-left: 4px solid #dc3545;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Mobile specific styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+
+      .container {
+        padding: 20px;
+        border-radius: 15px;
+      }
+
+      h2 {
+        font-size: 1.6rem;
+      }
+
+      #sessionInput {
+        font-size: 1.1rem;
+        padding: 12px 15px;
+      }
+
+      #joinBtn {
+        font-size: 1rem;
+        padding: 12px 20px;
+      }
+
+      #remoteVideo {
+        max-height: 60vh;
+      }
+
+      .status-bar {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+      }
+
+      .fullscreen-btn {
+        padding: 10px;
+        font-size: 1rem;
+      }
+
+      .instructions {
+        padding: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .container {
+        padding: 15px;
+      }
+
+      h2 {
+        font-size: 1.4rem;
+      }
+
+      .subtitle {
+        font-size: 1rem;
+      }
+
+      #remoteVideo {
+        min-height: 150px;
+        max-height: 50vh;
+      }
+    }
+
+    /* iOS Safari specific fixes */
+    @supports (-webkit-touch-callout: none) {
+      #remoteVideo {
+        -webkit-playsinline: true;
+      }
+      
+      .video-container {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+      }
+    }
+
+    /* Hide video container initially */
+    .video-container {
+      display: none;
+    }
+
+    .video-container.active {
+      display: block;
+    }
+  </style>
 </head>
 <body>
-  <h1>Viewer</h1>
-  <input id="sessionInput" placeholder="Enter session code" />
-  <button id="joinBtn">Join</button>
-  <br><br>
-  <video id="remoteVideo" autoplay playsinline style="width:100%;max-width:600px;border:1px solid black;"></video>
+  <div class="container">
+    <h2>📱 Screen Viewer</h2>
+    <p class="subtitle">Enter session code to view agent's screen</p>
+    
+    <div class="input-container">
+      <input type="text" id="sessionInput" placeholder="ABCDEF" maxlength="6" autocomplete="off">
+      <button id="joinBtn">🔗 Connect</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    
+    <div class="loading" id="loading" style="display: none;">
+      <div class="loading-spinner"></div>
+      <p>Connecting to session...</p>
+    </div>
+
+    <div class="video-container" id="videoContainer">
+      <div class="status-bar" id="statusBar">
+        <div class="status-dot connecting" id="statusDot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+      <video id="remoteVideo" autoplay playsinline muted controls></video>
+      <button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
+    </div>
+
+    <div class="controls" id="controls" style="display: none;">
+      <button class="control-btn disconnect-btn" id="disconnectBtn">Disconnect</button>
+    </div>
+
+    <div class="instructions">
+      <h3>📋 How to use:</h3>
+      <ul>
+        <li>Get the 6-digit session code from your agent</li>
+        <li>Enter the code above and tap Connect</li>
+        <li>The agent's screen will appear below</li>
+        <li>Tap fullscreen button for better viewing</li>
+        <li>Works on all mobile browsers</li>
+      </ul>
+    </div>
+  </div>
 
   <script type="module">
     import { db } from "./firebase-config.js";
-    import { ref, get, set, onChildAdded, push } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+    import { ref, get, set, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const joinBtn = document.getElementById("joinBtn");
     const sessionInput = document.getElementById("sessionInput");
     const remoteVideo = document.getElementById("remoteVideo");
+    const errorMessage = document.getElementById("errorMessage");
+    const loading = document.getElementById("loading");
+    const videoContainer = document.getElementById("videoContainer");
+    const controls = document.getElementById("controls");
+    const statusBar = document.getElementById("statusBar");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const disconnectBtn = document.getElementById("disconnectBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
 
-    joinBtn.onclick = async () => {
-      const code = sessionInput.value.trim();
-      if (!code) {
-        alert("Enter a session code");
-        return;
-      }
+    let currentPC = null;
+    let currentSessionCode = null;
 
-      const pc = new RTCPeerConnection();
-      pc.ontrack = (event) => {
-        remoteVideo.srcObject = event.streams[0];
-      };
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          push(ref(db, "sessions/" + code + "/candidates"), event.candidate.toJSON());
-        }
-      };
-
-      const snap = await get(ref(db, "sessions/" + code + "/offer"));
-      if (!snap.exists()) {
-        alert("Session not found");
-        return;
-      }
-
-      await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-
-      await set(ref(db, "sessions/" + code + "/answer"), answer);
-
-      onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
-        } catch (e) {
-          console.error("ICE error:", e);
-        }
-      });
+    // Enhanced RTCPeerConnection configuration for mobile
+    const pcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun.stunprotocol.org:3478' }
+      ],
+      iceCandidatePoolSize: 10
     };
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+
+    function showLoading(show) {
+      loading.style.display = show ? 'block' : 'none';
+      joinBtn.disabled = show;
+      joinBtn.textContent = show ? 'Connecting...' : '🔗 Connect';
+    }
+
+    function updateStatus(status, text) {
+      statusDot.className = 'status-dot ' + status;
+      statusText.textContent = text;
+    }
+
+    function showVideoContainer() {
+      videoContainer.classList.add('active');
+      controls.style.display = 'flex';
+    }
+
+    function hideVideoContainer() {
+      videoContainer.classList.remove('active');
+      controls.style.display = 'none';
+    }
+
+    async function joinSession() {
+      const code = sessionInput.value.trim().toUpperCase();
+      if (!code || code.length !== 6) {
+        showError("Please enter a valid 6-digit session code");
+        return;
+      }
+
+      showLoading(true);
+      errorMessage.style.display = 'none';
+
+      try {
+        // Create peer connection
+        currentPC = new RTCPeerConnection(pcConfig);
+        currentSessionCode = code;
+
+        // Handle incoming video stream
+        currentPC.ontrack = (event) => {
+          console.log('Received remote stream');
+          remoteVideo.srcObject = event.streams[0];
+          showVideoContainer();
+          updateStatus('connected', 'Connected');
+          showLoading(false);
+        };
+
+        // Monitor connection state
+        currentPC.onconnectionstatechange = () => {
+          console.log('Connection state:', currentPC.connectionState);
+          switch (currentPC.connectionState) {
+            case 'connecting':
+              updateStatus('connecting', 'Connecting...');
+              break;
+            case 'connected':
+              updateStatus('connected', 'Connected');
+              break;
+            case 'disconnected':
+            case 'failed':
+              updateStatus('error', 'Connection lost');
+              showError('Connection failed. Please try again.');
+              disconnect();
+              break;
+          }
+        };
+
+        // Get offer from Firebase
+        const snap = await get(ref(db, "sessions/" + code + "/offer"));
+        if (!snap.exists()) {
+          throw new Error("Session not found. Please check the code.");
+        }
+
+        await currentPC.setRemoteDescription(new RTCSessionDescription(snap.val()));
+
+        // Create and send answer
+        const answer = await currentPC.createAnswer();
+        await currentPC.setLocalDescription(answer);
+        await set(ref(db, "sessions/" + code + "/answer"), answer);
+
+        // Listen for ICE candidates
+        onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
+          if (currentPC && snap.val()) {
+            try {
+              await currentPC.addIceCandidate(new RTCIceCandidate(snap.val()));
+            } catch (e) {
+              console.error("Error adding candidate:", e);
+            }
+          }
+        });
+
+        updateStatus('connecting', 'Waiting for stream...');
+
+        // Connection timeout
+        setTimeout(() => {
+          if (currentPC && currentPC.connectionState !== 'connected') {
+            showError('Connection timeout. Please try again.');
+            disconnect();
+          }
+        }, 15000);
+
+      } catch (error) {
+        console.error('Join error:', error);
+        showError(error.message || 'Failed to connect. Please try again.');
+        showLoading(false);
+      }
+    }
+
+    function disconnect() {
+      if (currentPC) {
+        currentPC.close();
+        currentPC = null;
+      }
+
+      if (currentSessionCode) {
+        off(ref(db, "sessions/" + currentSessionCode + "/candidates"));
+        currentSessionCode = null;
+      }
+
+      remoteVideo.srcObject = null;
+      hideVideoContainer();
+      showLoading(false);
+      sessionInput.value = '';
+      updateStatus('connecting', 'Disconnected');
+    }
+
+    // Auto-format input
+    sessionInput.addEventListener('input', function() {
+      this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    // Enter key support
+    sessionInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        joinSession();
+      }
+    });
+
+    // Event listeners
+    joinBtn.onclick = joinSession;
+    disconnectBtn.onclick = disconnect;
+
+    // Fullscreen functionality
+    fullscreenBtn.onclick = () => {
+      if (remoteVideo.requestFullscreen) {
+        remoteVideo.requestFullscreen();
+      } else if (remoteVideo.webkitRequestFullscreen) {
+        remoteVideo.webkitRequestFullscreen();
+      } else if (remoteVideo.mozRequestFullScreen) {
+        remoteVideo.mozRequestFullScreen();
+      } else if (remoteVideo.msRequestFullscreen) {
+        remoteVideo.msRequestFullscreen();
+      }
+    };
+
+    // Video events for mobile
+    remoteVideo.addEventListener('loadedmetadata', () => {
+      console.log('Video metadata loaded');
+    });
+
+    remoteVideo.addEventListener('canplay', () => {
+      console.log('Video can play');
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', disconnect);
+
+    // Mobile-specific video handling
+    remoteVideo.addEventListener('click', () => {
+      if (remoteVideo.paused) {
+        remoteVideo.play();
+      }
+    });
+
+    // Auto-play for mobile (with user gesture)
+    document.addEventListener('touchstart', function() {
+      if (remoteVideo.srcObject && remoteVideo.paused) {
+        remoteVideo.play().catch(e => console.log('Autoplay failed:', e));
+      }
+    }, { once: true });
   </script>
 </body>
 </html>
