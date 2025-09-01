@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,22 +24,20 @@
       max-width: 400px;
       text-align: center;
     }
-    input {
+    input, button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin: 10px 0;
-      border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1rem;
     }
+    input {
+      border: 1px solid #ccc;
+    }
     button {
-      padding: 12px;
-      width: 100%;
       background: #007BFF;
       border: none;
       color: white;
-      font-size: 1rem;
-      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
@@ -60,8 +57,9 @@
   <div class="card">
     <h2>Viewer</h2>
     <input type="text" id="sessionInput" placeholder="Enter Session Code">
-    <button id="joinBtn">Join</button>
-    <video id="remoteVideo" autoplay playsinline muted></video>
+    <button id="joinBtn">Join Session</button>
+    <video id="remoteVideo" playsinline muted></video>
+    <button id="playBtn" style="display:none;">▶ Start Video</button>
   </div>
 
   <script type="module">
@@ -69,6 +67,7 @@
     import { ref, get, set, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const joinBtn = document.getElementById("joinBtn");
+    const playBtn = document.getElementById("playBtn");
     const sessionInput = document.getElementById("sessionInput");
     const remoteVideo = document.getElementById("remoteVideo");
 
@@ -76,10 +75,16 @@
       const code = sessionInput.value;
       if (!code) return alert("Enter a session code");
 
-      const pc = new RTCPeerConnection();
+      // ✅ Add STUN server
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" }
+        ]
+      });
 
       pc.ontrack = (event) => {
         remoteVideo.srcObject = event.streams[0];
+        playBtn.style.display = "block"; // show play button for mobile
       };
 
       const snap = await get(ref(db, "sessions/" + code + "/offer"));
@@ -99,20 +104,14 @@
         }
       });
     };
-  </script>
 
-  <!-- Tawk.to Script -->
-  <script type="text/javascript">
-  var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-  (function(){
-  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-  s1.async=true;
-  s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
-  s1.charset='UTF-8';
-  s1.setAttribute('crossorigin','*');
-  s0.parentNode.insertBefore(s1,s0);
-  })();
+    // Mobile autoplay fix
+    playBtn.onclick = () => {
+      remoteVideo.muted = false;
+      remoteVideo.play();
+      playBtn.style.display = "none";
+    };
   </script>
-  <!-- End of Tawk.to Script -->
 </body>
 </html>
+
