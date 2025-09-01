@@ -1,117 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 1rem;
-    }
-    .card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    input {
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #007BFF;
-      border: none;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    video {
-      width: 100%;
-      max-height: 50vh;
-      margin-top: 15px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background: black;
-    }
-  </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Viewer</h2>
-    <input type="text" id="sessionInput" placeholder="Enter Session Code">
-    <button id="joinBtn">Join Session</button>
-    <video id="remoteVideo" playsinline muted></video>
-    <button id="playBtn" style="display:none;">▶ Start Video</button>
-  </div>
+  <h2>Enter Session Code</h2>
+  <input type="text" id="sessionInput" placeholder="Enter session code">
+  <button id="joinBtn">Join</button>
+  <br><br>
+  <video id="remoteVideo" autoplay playsinline controls></video>
 
-  <script type="module">
-    import { db } from "./firebase-config.js";
-    import { ref, get, set, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+  <script>
+    // 🔑 Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyClRGnFk5duOztjsuOaUAWXZSF5j0acvVY",
+      authDomain: "screen-share-bcd1f.firebaseapp.com",
+      databaseURL: "https://screen-share-bcd1f-default-rtdb.firebaseio.com",
+      projectId: "screen-share-bcd1f",
+      storageBucket: "screen-share-bcd1f.appspot.com",
+      messagingSenderId: "407756033348",
+      appId: "1:407756033348:web:76ba2ce5bb2d29ab9fdb11"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Grab elements
     const joinBtn = document.getElementById("joinBtn");
-    const playBtn = document.getElementById("playBtn");
     const sessionInput = document.getElementById("sessionInput");
     const remoteVideo = document.getElementById("remoteVideo");
 
     joinBtn.onclick = async () => {
-      const code = sessionInput.value;
-      if (!code) return alert("Enter a session code");
+      const code = sessionInput.value.trim();
+      if (!code) {
+        alert("Enter a session code");
+        return;
+      }
 
-      // ✅ Add STUN server
-      const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" }
-        ]
-      });
+      try {
+        const pc = new RTCPeerConnection();
 
-      pc.ontrack = (event) => {
-        remoteVideo.srcObject = event.streams[0];
-        playBtn.style.display = "block"; // show play button for mobile
-      };
+        pc.ontrack = (event) => {
+          console.log("Remote stream received:", event.streams);
+          remoteVideo.srcObject = event.streams[0];
+        };
 
-      const snap = await get(ref(db, "sessions/" + code + "/offer"));
-      if (!snap.exists()) return alert("Session not found");
-
-      await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
-
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await set(ref(db, "sessions/" + code + "/answer"), answer);
-
-      onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
-        } catch (e) {
-          console.error("Error adding candidate:", e);
+        const snap = await db.ref("sessions/" + code + "/offer").get();
+        if (!snap.exists()) {
+          alert("Session not found");
+          return;
         }
-      });
-    };
 
-    // Mobile autoplay fix
-    playBtn.onclick = () => {
-      remoteVideo.muted = false;
-      remoteVideo.play();
-      playBtn.style.display = "none";
+        await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await db.ref("sessions/" + code + "/answer").set(answer);
+
+        db.ref("sessions/" + code + "/candidates").on("child_added", async (snap) => {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
+          } catch (e) {
+            console.error("Error adding ICE candidate:", e);
+          }
+        });
+
+        console.log("Joined session:", code);
+      } catch (err) {
+        console.error("Join error:", err);
+        alert("Error joining session: " + err.message);
+      }
     };
   </script>
 </body>
 </html>
-
