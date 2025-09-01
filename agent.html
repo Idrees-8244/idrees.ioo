@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Agent Screen Share</title>
+  <style>
+    body { font-family:Arial, sans-serif; background:#f4f6f9; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+    .card { background:white; padding:2rem; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); width:400px; text-align:center; }
+    button { padding:10px 20px; background:#28a745; border:none; color:white; border-radius:6px; cursor:pointer; margin:10px 0; }
+    button:hover { background:#1e7e34; }
+    video { width:100%; margin-top:15px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Agent Screen Share</h2>
+    <button id="startShare">Start Screen Share</button>
+    <p>Session Code: <span id="sessionCode"></span></p>
+    <video id="preview" autoplay muted playsinline></video>
+  </div>
+
+  <script type="module">
+    import { db, auth } from "./firebase-config.js";
+    import { ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    onAuthStateChanged(auth, user => {
+      if (!user) window.location.href = "login.html";
+    });
+
+    const startBtn = document.getElementById("startShare");
+    const sessionEl = document.getElementById("sessionCode");
+    const preview = document.getElementById("preview");
+
+    startBtn.onclick = async () => {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      preview.srcObject = stream;
+
+      const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      sessionEl.innerText = sessionCode;
+
+      const pc = new RTCPeerConnection();
+
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          push(ref(db, "sessions/" + sessionCode + "/candidates"), event.candidate.toJSON());
+        }
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await set(ref(db, "sessions/" + sessionCode + "/offer"), offer);
+
+      onValue(ref(db, "sessions/" + sessionCode + "/answer"), async (snap) => {
+        if (snap.val() && !pc.currentRemoteDescription) {
+          await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+        }
+      });
+    };
+  </script>
+
+  <!-- Tawk.to Script -->
+  <script type="text/javascript">
+  var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+  (function(){
+  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+  s1.async=true;
+  s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
+  s1.charset='UTF-8';
+  s1.setAttribute('crossorigin','*');
+  s0.parentNode.insertBefore(s1,s0);
+  })();
+  </script>
+  <!-- End of Tawk.to Script -->
+</body>
+</html>

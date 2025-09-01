@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Viewer</title>
+  <style>
+    body { font-family:Arial, sans-serif; background:#f4f6f9; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+    .card { background:white; padding:2rem; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); width:400px; text-align:center; }
+    input { width:80%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:6px; }
+    button { padding:10px 20px; background:#007BFF; border:none; color:white; border-radius:6px; cursor:pointer; }
+    button:hover { background:#0056b3; }
+    video { width:100%; margin-top:15px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Viewer</h2>
+    <input type="text" id="sessionInput" placeholder="Enter Session Code">
+    <button id="joinBtn">Join</button>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
+
+  <script type="module">
+    import { db } from "./firebase-config.js";
+    import { ref, get, set, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const joinBtn = document.getElementById("joinBtn");
+    const sessionInput = document.getElementById("sessionInput");
+    const remoteVideo = document.getElementById("remoteVideo");
+
+    joinBtn.onclick = async () => {
+      const code = sessionInput.value;
+      if (!code) return alert("Enter a session code");
+
+      const pc = new RTCPeerConnection();
+
+      pc.ontrack = (event) => {
+        remoteVideo.srcObject = event.streams[0];
+      };
+
+      const snap = await get(ref(db, "sessions/" + code + "/offer"));
+      if (!snap.exists()) return alert("Session not found");
+
+      await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await set(ref(db, "sessions/" + code + "/answer"), answer);
+
+      onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
+        } catch (e) {
+          console.error("Error adding candidate:", e);
+        }
+      });
+    };
+  </script>
+
+  <!-- Tawk.to Script -->
+  <script type="text/javascript">
+  var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+  (function(){
+  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+  s1.async=true;
+  s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
+  s1.charset='UTF-8';
+  s1.setAttribute('crossorigin','*');
+  s0.parentNode.insertBefore(s1,s0);
+  })();
+  </script>
+  <!-- End of Tawk.to Script -->
+</body>
+</html>
