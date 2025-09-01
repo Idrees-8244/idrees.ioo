@@ -1,14 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Agent Screen Share</title>
+  <title>Agent - Share Screen</title>
 </head>
 <body>
-  <h2>Start Screen Sharing</h2>
-  <button id="startBtn">Start Sharing</button>
-  <p>Session Code: <span id="sessionCode"></span></p>
+  <h1>Agent Screen Share</h1>
+  <button id="startBtn">Start Session</button>
+  <p>Session Code: <span id="code"></span></p>
+  <script type="module">
+    import { db } from "./firebase-config.js";
+    import { ref, set, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
 
-  <script type="module" src="screenshare.js"></script>
+    const startBtn = document.getElementById("startBtn");
+    const codeSpan = document.getElementById("code");
+
+    startBtn.onclick = async () => {
+      const pc = new RTCPeerConnection();
+      const code = Math.random().toString(36).substring(2, 8);
+      codeSpan.textContent = code;
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          push(ref(db, "sessions/" + code + "/candidates"), event.candidate.toJSON());
+        }
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await set(ref(db, "sessions/" + code + "/offer"), offer);
+
+      onChildAdded(ref(db, "sessions/" + code + "/answer"), async (snap) => {
+        if (snap.val()) {
+          await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+        }
+      });
+    };
+  </script>
 </body>
 </html>
