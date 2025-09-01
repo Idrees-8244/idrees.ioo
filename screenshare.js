@@ -1,69 +1,64 @@
-// STUN server
-const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, set, push, onChildAdded, get, child } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-let hostPC = null, viewerPC = null, localStream = null;
+const firebaseConfig = {
+  apiKey: "AIzaSyClRGnFk5duOztjsuOaUAWXZSF5j0acvVY",
+  authDomain: "screen-share-bcd1f.firebaseapp.com",
+  databaseURL: "https://screen-share-bcd1f-default-rtdb.firebaseio.com",
+  projectId: "screen-share-bcd1f",
+  storageBucket: "screen-share-bcd1f.appspot.com",
+  messagingSenderId: "16113178925",
+  appId: "1:16113178925:web:fbd71b9d357ab74406459d"
+};
 
-// ----- AGENT -----
-async function startSharing(sessionCode) {
-  localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-  const previewEl = document.getElementById('preview');
-  if (previewEl) previewEl.srcObject = localStream;
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  hostPC = new RTCPeerConnection(ICE_SERVERS);
+const startBtn = document.getElementById("startBtn");
+const sessionCodeEl = document.getElementById("sessionCode");
 
-  hostPC.onicecandidate = (evt) => {
-    if (evt.candidate) db.ref(`signaling/${sessionCode}/hostCandidates`).push(JSON.stringify(evt.candidate));
+let localStream;
+let peerConnection;
+let sessionCode;
+
+startBtn.onclick = async () => {
+  sessionCode = Math.random().toString(36).substring(2, 8);
+  sessionCodeEl.textContent = sessionCode;
+
+  localStream = await navigator.mediaDevices.getDisplayMedia({
+    video: true,
+    audio: true
+  });
+
+  peerConnection = new RTCPeerConnection();
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+  peerConnection.onicecandidate = (evt) => {
+    if (evt.candidate) {
+      push(ref(db, `signaling/${sessionCode}/hostCandidates`), JSON.stringify(evt.candidate));
+    }
   };
 
-  localStream.getTracks().forEach(track => hostPC.addTrack(track, localStream));
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  await set(ref(db, `signaling/${sessionCode}/offer`), offer);
 
-  const offer = await hostPC.createOffer();
-  await hostPC.setLocalDescription(offer);
-  await db.ref(`signaling/${sessionCode}/offer`).set(JSON.stringify(offer));
-
-  db.ref(`signaling/${sessionCode}/answer`).on('value', async snap => {
-    const val = snap.val();
-    if (val && hostPC && !hostPC.currentRemoteDescription) {
-      await hostPC.setRemoteDescription(new RTCSessionDescription(JSON.parse(val)));
+  // Watch for viewer answer
+  const ansSnap = ref(db, `signaling/${sessionCode}/answer`);
+  onChildAdded(ref(db, `signaling/${sessionCode}/viewerCandidates`), async (snap) => {
+    try {
+      const val = snap.val();
+      const cand = typeof val === "string" ? JSON.parse(val) : val;
+      await peerConnection.addIceCandidate(new RTCIceCandidate(cand));
+    } catch (e) {
+      console.error("Error adding viewer candidate:", e);
     }
   });
 
-  db.ref(`signaling/${sessionCode}/viewerCandidates`).on('child_added', async snap => {
-    const val = snap.val();
-    if (!val) return;
-    await hostPC.addIceCandidate(new RTCIceCandidate(JSON.parse(val)));
+  get(child(ref(db), `signaling/${sessionCode}/answer`)).then(async (snap) => {
+    if (snap.exists()) {
+      const answer = snap.val();
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    }
   });
-
-  console.log('Screen sharing started. Code:', sessionCode);
-}
-
-// ----- VIEWER -----
-async function joinSession(sessionCode) {
-  viewerPC = new RTCPeerConnection(ICE_SERVERS);
-
-  viewerPC.ontrack = (evt) => {
-    const remoteVideo = document.getElementById('remoteVideo');
-    if (remoteVideo) remoteVideo.srcObject = evt.streams[0];
-  };
-
-  viewerPC.onicecandidate = (evt) => {
-    if (evt.candidate) db.ref(`signaling/${sessionCode}/viewerCandidates`).push(JSON.stringify(evt.candidate));
-  };
-
-  const offerSnap = await db.ref(`signaling/${sessionCode}/offer`).once('value');
-  const offerVal = offerSnap.val();
-  if (!offerVal) return alert('No active session with that code.');
-  await viewerPC.setRemoteDescription(new RTCSessionDescription(JSON.parse(offerVal)));
-
-  const answer = await viewerPC.createAnswer();
-  await viewerPC.setLocalDescription(answer);
-  await db.ref(`signaling/${sessionCode}/answer`).set(JSON.stringify(answer));
-
-  db.ref(`signaling/${sessionCode}/hostCandidates`).on('child_added', async snap => {
-    const val = snap.val();
-    if (!val) return;
-    await viewerPC.addIceCandidate(new RTCIceCandidate(JSON.parse(val)));
-  });
-
-  console.log('Joined session:', sessionCode);
-}
+};
