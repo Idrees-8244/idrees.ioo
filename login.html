@@ -3,21 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Agent Login</title>
-  <style>
-    body { font-family:Arial, sans-serif; background:#f4f6f9; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
-    .card { background:white; padding:2rem; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); width:320px; text-align:center; }
-    input { width:90%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:6px; }
-    button { padding:10px 20px; background:#007BFF; border:none; color:white; border-radius:6px; cursor:pointer; margin-top:10px; }
-    button:hover { background:#0056b3; }
-  </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Agent Login</h2>
-    <input type="email" id="email" placeholder="Email"><br>
-    <input type="password" id="password" placeholder="Password"><br>
-    <button id="loginBtn">Login</button>
-  </div>
+  <h2>Agent Login</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button id="loginBtn">Login</button>
 
   <script type="module">
     import { app, auth } from "./firebase-config.js";
@@ -35,19 +26,5 @@
       }
     };
   </script>
-
-  <!-- Tawk.to Script -->
-  <script type="text/javascript">
-  var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-  (function(){
-  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-  s1.async=true;
-  s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
-  s1.charset='UTF-8';
-  s1.setAttribute('crossorigin','*');
-  s0.parentNode.insertBefore(s1,s0);
-  })();
-  </script>
-  <!-- End of Tawk.to Script -->
 </body>
 </html>
