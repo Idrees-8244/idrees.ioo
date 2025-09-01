@@ -3,36 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Viewer</title>
+  <title>Viewer - Join Screen Share</title>
 </head>
 <body>
-  <h2>Enter Session Code</h2>
-  <input type="text" id="sessionInput" placeholder="Enter session code">
+  <h2>Viewer - Join Screen</h2>
+  <input type="text" id="sessionInput" placeholder="Enter session code" />
   <button id="joinBtn">Join</button>
   <br><br>
-  <video id="remoteVideo" autoplay playsinline controls></video>
+  <video id="remoteVideo" autoplay playsinline controls style="width:100%; max-width:600px;"></video>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, get, set, onChildAdded } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-  <script>
-    // 🔑 Your Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyClRGnFk5duOztjsuOaUAWXZSF5j0acvVY",
       authDomain: "screen-share-bcd1f.firebaseapp.com",
       databaseURL: "https://screen-share-bcd1f-default-rtdb.firebaseio.com",
       projectId: "screen-share-bcd1f",
-      storageBucket: "screen-share-bcd1f.appspot.com",
+      storageBucket: "screen-share-bcd1f.firebasestorage.app",
       messagingSenderId: "407756033348",
       appId: "1:407756033348:web:76ba2ce5bb2d29ab9fdb11"
     };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    // Grab elements
     const joinBtn = document.getElementById("joinBtn");
     const sessionInput = document.getElementById("sessionInput");
     const remoteVideo = document.getElementById("remoteVideo");
@@ -52,7 +48,7 @@
           remoteVideo.srcObject = event.streams[0];
         };
 
-        const snap = await db.ref("sessions/" + code + "/offer").get();
+        const snap = await get(ref(db, "sessions/" + code + "/offer"));
         if (!snap.exists()) {
           alert("Session not found");
           return;
@@ -62,9 +58,9 @@
 
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        await db.ref("sessions/" + code + "/answer").set(answer);
+        await set(ref(db, "sessions/" + code + "/answer"), answer);
 
-        db.ref("sessions/" + code + "/candidates").on("child_added", async (snap) => {
+        onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(snap.val()));
           } catch (e) {
