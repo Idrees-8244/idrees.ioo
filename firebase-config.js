@@ -1,21 +1,16 @@
-// firebase-config.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+// Replace with your Firebase config from Firebase console
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyClRGnFk5duOztjsuOaUAWXZSF5j0acvVY",
-  authDomain: "screen-share-bcd1f.firebaseapp.com",
-  databaseURL: "https://screen-share-bcd1f-default-rtdb.firebaseio.com",
-  projectId: "screen-share-bcd1f",
-  storageBucket: "screen-share-bcd1f.appspot.com",
-  messagingSenderId: "407756033348",
-  appId: "1:407756033348:web:76ba2ce5bb2d29ab9fdb11"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "XXXXXX",
+  appId: "XXXXXX"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
-
-export { app, db, auth };
+export const app = initializeApp(firebaseConfig);
+export const db = getDatabase(app);
