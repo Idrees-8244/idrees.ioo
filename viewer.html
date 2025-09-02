@@ -249,7 +249,7 @@
       <div class="status-dot connecting" id="statusDot"></div>
       <span id="statusText">Connecting...</span>
     </div>
-    <video id="remoteVideo" autoplay playsinline muted webkit-playsinline></video>
+    <video id="remoteVideo" playsinline muted webkit-playsinline controls></video>
   </div>
 
   <div class="controls" id="controls" style="display:none;">
@@ -375,70 +375,107 @@ function hideVideoContainer() {
 
 // Enhanced video handling for mobile
 function setupVideoElement() {
+  // Set all required properties for mobile compatibility
   remoteVideo.muted = true;
   remoteVideo.playsInline = true;
-  remoteVideo.autoplay = true;
+  remoteVideo.autoplay = false; // Disable autoplay, use manual play
   remoteVideo.setAttribute('playsinline', 'true');
   remoteVideo.setAttribute('webkit-playsinline', 'true');
-  remoteVideo.setAttribute('autoplay', 'true');
   remoteVideo.setAttribute('muted', 'true');
-  remoteVideo.controls = false;
+  remoteVideo.defaultMuted = true;
+  remoteVideo.volume = 0;
   
-  // iOS Safari specific handling
-  if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-    remoteVideo.setAttribute('controls', 'true');
-    logIce('iOS detected: Added controls for initial playback');
+  // Always show controls on mobile for easier debugging
+  if (isMobile) {
+    remoteVideo.controls = true;
+    logIce('Mobile: Video controls enabled for debugging');
   }
   
-  // Force play on user interaction for mobile
+  // Video event handlers
+  remoteVideo.addEventListener('loadstart', () => {
+    logIce('Video: Load started');
+  });
+  
+  remoteVideo.addEventListener('loadeddata', () => {
+    logIce('Video: Data loaded');
+  });
+  
   remoteVideo.addEventListener('loadedmetadata', () => {
-    logIce('Video metadata loaded');
+    logIce(`Video: Metadata loaded - ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
+    
+    // Manual play attempt
     setTimeout(() => {
-      remoteVideo.play().catch(e => {
-        logIce('Initial autoplay failed: ' + e.message);
-        // For iOS, we need user interaction
-        if (isMobile) {
-          showError('Tap anywhere to start video playback');
-          document.addEventListener('touchstart', forceVideoPlay, { once: true });
-          document.addEventListener('click', forceVideoPlay, { once: true });
-        }
-      });
-    }, 100);
+      attemptVideoPlay('metadata loaded');
+    }, 200);
   });
   
   remoteVideo.addEventListener('canplay', () => { 
-    logIce('Video ready to play'); 
-    remoteVideo.play().catch(e => logIce('Canplay autoplay failed: ' + e.message));
+    logIce('Video: Can play'); 
+    attemptVideoPlay('canplay event');
   });
   
-  // Handle video errors
+  remoteVideo.addEventListener('playing', () => {
+    logIce('Video: Playing started');
+    updateStatus('connected', 'Video playing');
+  });
+  
+  remoteVideo.addEventListener('pause', () => {
+    logIce('Video: Paused');
+  });
+  
+  remoteVideo.addEventListener('waiting', () => {
+    logIce('Video: Waiting for data');
+  });
+  
   remoteVideo.addEventListener('error', (e) => {
-    logIce('Video error: ' + (e.target.error ? e.target.error.message : 'Unknown error'));
-    showError('Video playback error. Please try reconnecting.');
+    const error = e.target.error;
+    logIce('Video error: ' + (error ? `${error.code} - ${error.message}` : 'Unknown error'));
+    showError('Video playback error. Tap to retry or reconnect.');
   });
   
-  // Handle video stalls
   remoteVideo.addEventListener('stalled', () => {
-    logIce('Video stalled, attempting to resume');
-    remoteVideo.load();
+    logIce('Video: Stalled, attempting to recover');
+  });
+  
+  // Click handler for manual play
+  remoteVideo.addEventListener('click', () => {
+    attemptVideoPlay('user click');
   });
 }
 
-function forceVideoPlay() {
-  if (remoteVideo.srcObject && remoteVideo.paused) {
-    remoteVideo.play().then(() => {
-      logIce('Video started playing after user interaction');
-      // Remove controls after successful play on iOS
-      if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-        setTimeout(() => {
-          remoteVideo.controls = false;
-          logIce('Removed controls after successful iOS playback');
-        }, 1000);
+function attemptVideoPlay(reason) {
+  if (!remoteVideo.srcObject) {
+    logIce(`Play attempt skipped - no source (${reason})`);
+    return;
+  }
+  
+  logIce(`Attempting video play: ${reason}`);
+  
+  const playPromise = remoteVideo.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      logIce(`Video play successful: ${reason}`);
+      // Hide controls after successful play (except on iOS for debugging)
+      if (!navigator.userAgent.includes('iPhone') && !navigator.userAgent.includes('iPad')) {
+        remoteVideo.controls = false;
       }
     }).catch(e => {
-      logIce('User interaction play failed: ' + e.message);
+      logIce(`Video play failed (${reason}): ${e.message}`);
+      
+      if (e.name === 'NotAllowedError') {
+        showError('Tap the video to start playback (browser security requirement)');
+      } else if (e.name === 'AbortError') {
+        logIce('Play aborted, likely due to new play request');
+      } else {
+        showError('Video playback issue. Please tap the video or reconnect.');
+      }
     });
   }
+}
+
+function forceVideoPlay() {
+  attemptVideoPlay('force play');
 }
 
 async function joinSession() {
@@ -519,60 +556,44 @@ async function joinSession() {
 
     // Enhanced track handling for mobile
     currentPC.ontrack = (event) => {
-      logIce('Received remote track');
+      logIce('=== TRACK EVENT RECEIVED ===');
+      logIce(`Event streams: ${event.streams.length}`);
+      logIce(`Event track: ${event.track.kind} - ${event.track.readyState}`);
+      
       const stream = event.streams[0];
       
       if (stream) {
-        logIce(`Stream has ${stream.getVideoTracks().length} video tracks and ${stream.getAudioTracks().length} audio tracks`);
-        
-        // Ensure we have video tracks
         const videoTracks = stream.getVideoTracks();
-        if (videoTracks.length === 0) {
-          logIce('No video tracks in stream');
-          showError('No video stream received. Please check the sharing device.');
-          return;
+        const audioTracks = stream.getAudioTracks();
+        
+        logIce(`Stream ID: ${stream.id}`);
+        logIce(`Video tracks: ${videoTracks.length}`);
+        logIce(`Audio tracks: ${audioTracks.length}`);
+        
+        if (videoTracks.length > 0) {
+          const videoTrack = videoTracks[0];
+          logIce(`Video track: ${videoTrack.label} - ${videoTrack.readyState} - Enabled: ${videoTrack.enabled}`);
         }
         
-        // Set the stream
+        // Always set the stream
         remoteVideo.srcObject = stream;
         showVideoContainer();
-        updateStatus('connected', 'Streaming active');
+        updateStatus('connected', 'Stream received');
         
-        // iOS Safari specific handling
-        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-          logIce('iOS detected: Applying iOS-specific video handling');
+        // Log video element state
+        setTimeout(() => {
+          logIce(`Video element: ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
+          logIce(`Video paused: ${remoteVideo.paused}`);
+          logIce(`Video muted: ${remoteVideo.muted}`);
+          logIce(`Video readyState: ${remoteVideo.readyState}`);
           
-          // Wait for metadata then try to play
-          remoteVideo.addEventListener('loadedmetadata', () => {
-            logIce('iOS: Video metadata loaded, attempting play');
-            remoteVideo.play().catch(e => {
-              logIce('iOS: Autoplay failed: ' + e.message);
-              showError('iOS: Tap the video to start playback');
-              
-              // Add click handler for iOS
-              remoteVideo.addEventListener('click', () => {
-                remoteVideo.play().then(() => {
-                  logIce('iOS: Video started after user tap');
-                  remoteVideo.controls = false;
-                }).catch(e => logIce('iOS: Manual play failed: ' + e.message));
-              }, { once: true });
-            });
-          }, { once: true });
-          
-        } else {
-          // Non-iOS handling
-          setTimeout(() => {
-            remoteVideo.play().catch(e => {
-              logIce('Non-iOS play failed: ' + e.message);
-              document.addEventListener('touchstart', forceVideoPlay, { once: true });
-              document.addEventListener('click', forceVideoPlay, { once: true });
-            });
-          }, 100);
-        }
+          // Force a play attempt
+          attemptVideoPlay('track received');
+        }, 500);
         
         showLoading(false);
       } else {
-        logIce('No stream received in track event');
+        logIce('ERROR: No stream received in track event');
         showError('Failed to receive video stream');
       }
     };
