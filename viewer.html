@@ -3,615 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Screen Viewer - Mobile Fixed</title>
+  <title>Screen Viewer</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-      color: #333;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    }
-
-    h2 {
-      text-align: center;
-      color: #333;
-      font-size: 2rem;
-      margin-bottom: 10px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #666;
-      margin-bottom: 30px;
-      font-size: 1.1rem;
-    }
-
-    .input-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-bottom: 30px;
-      align-items: center;
-    }
-
-    #sessionInput {
-      width: 100%;
-      max-width: 300px;
-      padding: 15px 20px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      text-align: center;
-      letter-spacing: 2px;
-      border: 3px solid #e1e5e9;
-      border-radius: 12px;
-      background: white;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      outline: none;
-    }
-
-    #sessionInput:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-    }
-
-    #joinBtn {
-      width: 100%;
-      max-width: 300px;
-      padding: 15px 25px;
-      background: linear-gradient(135deg, #28a745, #20c997);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    #joinBtn:disabled {
-      background: #6c757d;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .video-container {
-      margin-top: 20px;
-      border-radius: 15px;
-      overflow: hidden;
-      background: #000;
-      position: relative;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      display: none;
-    }
-
-    .video-container.active {
-      display: block;
-    }
-
-    #remoteVideo {
-      width: 100%;
-      height: auto;
-      min-height: 200px;
-      max-height: 70vh;
-      object-fit: contain;
-      background: #000;
-      display: block;
-    }
-
-    .status-bar {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      z-index: 10;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #28a745;
-      animation: pulse 2s infinite;
-    }
-
-    .status-dot.connecting {
-      background: #ffc107;
-    }
-
-    .status-dot.error {
-      background: #dc3545;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-
-    .disconnect-btn {
-      padding: 10px 20px;
-      background: linear-gradient(135deg, #dc3545, #c82333);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .error-message {
-      background: #f8d7da;
-      color: #721c24;
-      padding: 15px;
-      border-radius: 8px;
-      margin: 15px 0;
-      display: none;
-      text-align: center;
-      border-left: 4px solid #dc3545;
-    }
-
-    .ice-status {
-      background: #e9ecef;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px 0;
-      font-family: monospace;
-      font-size: 0.8rem;
-      display: none;
-      max-height: 100px;
-      overflow-y: auto;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #666;
-      display: none;
-    }
-
-    .loading-spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #667eea;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Mobile optimizations */
-    @media (max-width: 768px) {
-      body { padding: 15px; }
-      .container { padding: 20px; }
-      h2 { font-size: 1.6rem; }
-      #remoteVideo { max-height: 60vh; }
-    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; padding:20px; color:#333; }
+    .container { max-width:800px; margin:0 auto; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border-radius:20px; padding:30px; box-shadow:0 20px 40px rgba(0,0,0,0.1); }
+    h2 { text-align:center; color:#333; font-size:2rem; margin-bottom:10px; background:linear-gradient(135deg,#667eea,#764ba2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .subtitle { text-align:center; color:#666; margin-bottom:30px; font-size:1.1rem; }
+    .input-container { display:flex; flex-direction:column; gap:15px; margin-bottom:30px; align-items:center; }
+    #sessionInput { width:100%; max-width:300px; padding:15px 20px; font-size:1.2rem; font-weight:bold; text-align:center; letter-spacing:2px; border:3px solid #e1e5e9; border-radius:12px; background:white; transition:all 0.3s ease; text-transform:uppercase; outline:none; }
+    #sessionInput:focus { border-color:#667eea; box-shadow:0 0 0 4px rgba(102,126,234,0.2); }
+    #joinBtn { width:100%; max-width:300px; padding:15px 25px; background:linear-gradient(135deg,#28a745,#20c997); color:white; border:none; border-radius:12px; font-size:1.1rem; font-weight:600; cursor:pointer; transition:all 0.3s ease; box-shadow:0 8px 20px rgba(40,167,69,0.3); -webkit-tap-highlight-color:transparent; }
+    #joinBtn:disabled { background:#6c757d; cursor:not-allowed; transform:none; box-shadow:none; }
+    .video-container { margin-top:20px; border-radius:15px; overflow:hidden; background:#000; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.3); display:none; }
+    .video-container.active { display:block; }
+    #remoteVideo { width:100%; height:auto; min-height:200px; max-height:70vh; object-fit:contain; background:#000; display:block; }
+    .status-bar { position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.8); color:white; padding:8px 12px; border-radius:20px; font-size:0.9rem; font-weight:500; display:flex; align-items:center; gap:8px; z-index:10; }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:#28a745; animation:pulse 2s infinite; }
+    .status-dot.connecting { background:#ffc107; }
+    .status-dot.error { background:#dc3545; }
+    @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.5;} }
+    .controls { display:flex; justify-content:center; gap:15px; margin-top:20px; flex-wrap:wrap; }
+    .disconnect-btn { padding:10px 20px; background:linear-gradient(135deg,#dc3545,#c82333); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s ease; -webkit-tap-highlight-color:transparent; }
+    .error-message { background:#f8d7da; color:#721c24; padding:15px; border-radius:8px; margin:15px 0; display:none; text-align:center; border-left:4px solid #dc3545; }
+    .ice-status { background:#e9ecef; padding:10px; border-radius:8px; margin:10px 0; font-family:monospace; font-size:0.8rem; display:none; max-height:100px; overflow-y:auto; }
+    .loading { text-align:center; padding:20px; color:#666; display:none; }
+    .loading-spinner { border:3px solid #f3f3f3; border-top:3px solid #667eea; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto 10px; }
+    @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+    @media (max-width:768px) { body { padding:15px; } .container { padding:20px; } h2 { font-size:1.6rem; } #remoteVideo { max-height:60vh; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>📱 Screen Viewer</h2>
-    <p class="subtitle">Fixed ICE connection for mobile</p>
-    
-    <div class="input-container">
-      <input type="text" id="sessionInput" placeholder="ABCDEF" maxlength="6" autocomplete="off">
-      <button id="joinBtn">🔗 Connect</button>
-    </div>
-
-    <div class="error-message" id="errorMessage"></div>
-    <div class="ice-status" id="iceStatus"></div>
-    
-    <div class="loading" id="loading">
-      <div class="loading-spinner"></div>
-      <p>Connecting via TURN servers...</p>
-    </div>
-
-    <div class="video-container" id="videoContainer">
-      <div class="status-bar" id="statusBar">
-        <div class="status-dot connecting" id="statusDot"></div>
-        <span id="statusText">Connecting...</span>
-      </div>
-      <video id="remoteVideo" autoplay playsinline muted controls></video>
-    </div>
-
-    <div class="controls" id="controls" style="display: none;">
-      <button class="disconnect-btn" id="disconnectBtn">Disconnect</button>
-      <button class="disconnect-btn" id="toggleIceBtn" style="background: #6c757d;">Show ICE</button>
-    </div>
-
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-top: 20px; border-left: 4px solid #28a745;">
-      <h3 style="color: #333; margin-bottom: 10px; font-size: 1.1rem;">✅ ICE Setup Fixed:</h3>
-      <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
-        <li>Added multiple working TURN servers</li>
-        <li>Enhanced ICE candidate gathering</li>
-        <li>Better mobile network support</li>
-        <li>Automatic fallback to TURN relay</li>
-        <li>Real-time ICE status monitoring</li>
-      </ul>
-    </div>
+<div class="container">
+  <h2>📱 Screen Viewer</h2>
+  <p class="subtitle">Mobile & Desktop Friendly</p>
+  
+  <div class="input-container">
+    <input type="text" id="sessionInput" placeholder="ABCDEF" maxlength="6" autocomplete="off">
+    <button id="joinBtn">🔗 Connect</button>
   </div>
 
-  <script type="module">
-    import { db } from "./firebase-config.js";
-    import { ref, get, set, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  <div class="error-message" id="errorMessage"></div>
+  <div class="ice-status" id="iceStatus"></div>
 
-    const joinBtn = document.getElementById("joinBtn");
-    const sessionInput = document.getElementById("sessionInput");
-    const remoteVideo = document.getElementById("remoteVideo");
-    const errorMessage = document.getElementById("errorMessage");
-    const loading = document.getElementById("loading");
-    const videoContainer = document.getElementById("videoContainer");
-    const controls = document.getElementById("controls");
-    const statusBar = document.getElementById("statusBar");
-    const statusDot = document.getElementById("statusDot");
-    const statusText = document.getElementById("statusText");
-    const disconnectBtn = document.getElementById("disconnectBtn");
-    const toggleIceBtn = document.getElementById("toggleIceBtn");
-    const iceStatus = document.getElementById("iceStatus");
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <p>Connecting via TURN servers...</p>
+  </div>
 
-    let currentPC = null;
-    let currentSessionCode = null;
-    let iceDebug = false;
+  <div class="video-container" id="videoContainer">
+    <div class="status-bar" id="statusBar">
+      <div class="status-dot connecting" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+    <video id="remoteVideo" autoplay playsinline muted></video>
+  </div>
 
-    // FIXED: Enhanced ICE configuration with working TURN servers
-    const pcConfig = {
-      iceServers: [
-        // Multiple Google STUN servers
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        
-        // Additional STUN servers
-        { urls: 'stun:stun.stunprotocol.org:3478' },
-        { urls: 'stun:stun.cloudflare.com:3478' },
-        
-        // Free TURN servers from Metered (Open Relay)
-        {
-          urls: 'turn:openrelay.metered.ca:80',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        
-        // Additional working TURN servers
-        {
-          urls: 'turn:relay1.expressturn.com:3478',
-          credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-          username: 'efJYLJOKKLYAJXGHKLP3A22PBBDDTSSXTEH'
-        }
-      ],
-      iceCandidatePoolSize: 10,
-      iceTransportPolicy: 'all', // Use all available transport methods
-      bundlePolicy: 'max-bundle',
-      rtcpMuxPolicy: 'require'
+  <div class="controls" id="controls" style="display:none;">
+    <button class="disconnect-btn" id="disconnectBtn">Disconnect</button>
+    <button class="disconnect-btn" id="toggleIceBtn" style="background:#6c757d;">Show ICE</button>
+  </div>
+</div>
+
+<script type="module">
+import { db } from "./firebase-config.js";
+import { ref, get, set, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const joinBtn = document.getElementById("joinBtn");
+const sessionInput = document.getElementById("sessionInput");
+const remoteVideo = document.getElementById("remoteVideo");
+const errorMessage = document.getElementById("errorMessage");
+const loading = document.getElementById("loading");
+const videoContainer = document.getElementById("videoContainer");
+const controls = document.getElementById("controls");
+const statusBar = document.getElementById("statusBar");
+const statusDot = document.getElementById("statusDot");
+const statusText = document.getElementById("statusText");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const toggleIceBtn = document.getElementById("toggleIceBtn");
+const iceStatus = document.getElementById("iceStatus");
+
+let currentPC = null;
+let currentSessionCode = null;
+let iceDebug = false;
+
+const pcConfig = {
+  iceServers: [
+    { urls:'stun:stun.l.google.com:19302' },
+    { urls:'stun:stun1.l.google.com:19302' },
+    { urls:'stun:stun2.l.google.com:19302' },
+    { urls:'stun:stun3.l.google.com:19302' },
+    { urls:'stun:stun4.l.google.com:19302' },
+    { urls:'stun:stun.stunprotocol.org:3478' },
+    { urls:'stun:stun.cloudflare.com:3478' },
+    { urls:'turn:openrelay.metered.ca:80', username:'openrelayproject', credential:'openrelayproject' },
+    { urls:'turn:openrelay.metered.ca:443', username:'openrelayproject', credential:'openrelayproject' },
+    { urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject' }
+  ],
+  iceCandidatePoolSize:10,
+  iceTransportPolicy:'all',
+  bundlePolicy:'max-bundle',
+  rtcpMuxPolicy:'require'
+};
+
+function logIce(msg) { console.log(`[ICE] ${msg}`); if(iceDebug){ const time = new Date().toLocaleTimeString(); iceStatus.innerHTML += `[${time}] ${msg}<br>`; iceStatus.scrollTop = iceStatus.scrollHeight; } }
+function showError(msg){ errorMessage.textContent=msg; errorMessage.style.display='block'; setTimeout(()=>{ errorMessage.style.display='none'; },8000);}
+function showLoading(show){ loading.style.display=show?'block':'none'; joinBtn.disabled=show; joinBtn.textContent=show?'Connecting...':'🔗 Connect'; }
+function updateStatus(status,text){ statusDot.className='status-dot '+status; statusText.textContent=text; logIce(`Status: ${text}`); }
+function showVideoContainer(){ videoContainer.classList.add('active'); controls.style.display='flex'; }
+function hideVideoContainer(){ videoContainer.classList.remove('active'); controls.style.display='none'; }
+
+async function joinSession(){
+  const code=sessionInput.value.trim().toUpperCase();
+  if(!code || code.length!==6){ showError("Please enter a valid 6-digit session code"); return;}
+  showLoading(true); errorMessage.style.display='none'; logIce(`Starting connection to session: ${code}`);
+  
+  try{
+    currentPC = new RTCPeerConnection(pcConfig); currentSessionCode=code;
+
+    currentPC.oniceconnectionstatechange = ()=>{
+      const state=currentPC.iceConnectionState;
+      logIce(`ICE connection state: ${state}`);
+      switch(state){
+        case'checking': updateStatus('connecting','Checking connectivity...'); break;
+        case'connected':
+        case'completed': updateStatus('connected','Connected via ICE'); showLoading(false); break;
+        case'disconnected': updateStatus('connecting','Reconnecting...'); break;
+        case'failed': updateStatus('error','ICE connection failed'); showError('Network connection failed. Trying TURN...'); if(currentPC.restartIce){ currentPC.restartIce(); } break;
+        case'closed': updateStatus('connecting','Connection closed'); break;
+      }
     };
 
-    function logIce(message) {
-      console.log(`[ICE] ${message}`);
-      if (iceDebug) {
-        const time = new Date().toLocaleTimeString();
-        iceStatus.innerHTML += `[${time}] ${message}<br>`;
-        iceStatus.scrollTop = iceStatus.scrollHeight;
-      }
-    }
+    currentPC.onicegatheringstatechange = ()=>{ logIce(`ICE gathering state: ${currentPC.iceGatheringState}`); }
+    currentPC.onicecandidate = async (event)=>{ if(event.candidate){ logIce(`New ICE candidate: ${event.candidate.type}`); } else { logIce('ICE candidate gathering finished'); } };
+    currentPC.onconnectionstatechange = ()=>{ const state=currentPC.connectionState; logIce(`Connection state: ${state}`); }
+    currentPC.ontrack=(event)=>{ remoteVideo.srcObject=event.streams[0]; showVideoContainer(); updateStatus('connected','Streaming active'); showLoading(false); }
 
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.style.display = 'block';
-      setTimeout(() => {
-        errorMessage.style.display = 'none';
-      }, 8000);
-    }
+    const offerSnap=await get(ref(db,"sessions/"+code+"/offer"));
+    if(!offerSnap.exists()){ throw new Error("Session not found."); }
+    const offer=offerSnap.val();
+    await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
 
-    function showLoading(show) {
-      loading.style.display = show ? 'block' : 'none';
-      joinBtn.disabled = show;
-      joinBtn.textContent = show ? 'Connecting...' : '🔗 Connect';
-    }
+    const answer=await currentPC.createAnswer({ offerToReceiveVideo:true, offerToReceiveAudio:false });
+    await currentPC.setLocalDescription(answer);
+    await set(ref(db,"sessions/"+code+"/answer"),answer);
 
-    function updateStatus(status, text) {
-      statusDot.className = 'status-dot ' + status;
-      statusText.textContent = text;
-      logIce(`Status: ${text}`);
-    }
-
-    function showVideoContainer() {
-      videoContainer.classList.add('active');
-      controls.style.display = 'flex';
-    }
-
-    function hideVideoContainer() {
-      videoContainer.classList.remove('active');
-      controls.style.display = 'none';
-    }
-
-    async function joinSession() {
-      const code = sessionInput.value.trim().toUpperCase();
-      if (!code || code.length !== 6) {
-        showError("Please enter a valid 6-digit session code");
-        return;
-      }
-
-      showLoading(true);
-      errorMessage.style.display = 'none';
-      logIce(`Starting connection to session: ${code}`);
-
-      try {
-        // Create peer connection with enhanced ICE config
-        currentPC = new RTCPeerConnection(pcConfig);
-        currentSessionCode = code;
-
-        // Enhanced ICE monitoring
-        currentPC.oniceconnectionstatechange = () => {
-          const state = currentPC.iceConnectionState;
-          logIce(`ICE connection state: ${state}`);
-          
-          switch (state) {
-            case 'checking':
-              updateStatus('connecting', 'Checking connectivity...');
-              break;
-            case 'connected':
-            case 'completed':
-              updateStatus('connected', 'Connected via ICE');
-              showLoading(false);
-              break;
-            case 'disconnected':
-              updateStatus('connecting', 'Reconnecting...');
-              logIce('ICE disconnected, attempting reconnection...');
-              break;
-            case 'failed':
-              updateStatus('error', 'ICE connection failed');
-              showError('Network connection failed. Trying TURN relay servers...');
-              
-              // Try to restart ICE
-              if (currentPC.restartIce) {
-                logIce('Attempting ICE restart...');
-                currentPC.restartIce();
-              }
-              break;
-            case 'closed':
-              updateStatus('connecting', 'Connection closed');
-              break;
-          }
-        };
-
-        currentPC.onicegatheringstatechange = () => {
-          const state = currentPC.iceGatheringState;
-          logIce(`ICE gathering state: ${state}`);
-          
-          if (state === 'complete') {
-            logIce('ICE gathering completed successfully');
-          }
-        };
-
-        currentPC.onicecandidate = (event) => {
-          if (event.candidate) {
-            const candidate = event.candidate;
-            logIce(`New ICE candidate: ${candidate.type} - ${candidate.protocol}`);
-            
-            // Log TURN server usage
-            if (candidate.type === 'relay') {
-              logIce('✅ Using TURN relay server - mobile friendly!');
-              updateStatus('connecting', 'Connected via TURN relay');
-            }
-          } else {
-            logIce('ICE candidate gathering finished');
-          }
-        };
-
-        // Connection state monitoring
-        currentPC.onconnectionstatechange = () => {
-          const state = currentPC.connectionState;
-          logIce(`Connection state: ${state}`);
-          
-          switch (state) {
-            case 'connecting':
-              updateStatus('connecting', 'Establishing connection...');
-              break;
-            case 'connected':
-              updateStatus('connected', 'Successfully connected');
-              showLoading(false);
-              break;
-            case 'failed':
-              updateStatus('error', 'Connection failed');
-              showError('WebRTC connection failed. Check your network or try a different browser.');
-              break;
-          }
-        };
-
-        // Handle incoming video stream
-        currentPC.ontrack = (event) => {
-          logIce('✅ Received remote video stream');
-          remoteVideo.srcObject = event.streams[0];
-          showVideoContainer();
-          updateStatus('connected', 'Streaming active');
-          showLoading(false);
-        };
-
-        // Get offer from Firebase
-        logIce('Fetching session offer from Firebase...');
-        const offerSnap = await get(ref(db, "sessions/" + code + "/offer"));
-        if (!offerSnap.exists()) {
-          throw new Error("Session not found. Make sure the agent started screen sharing.");
-        }
-
-        const offer = offerSnap.val();
-        logIce('Received offer, setting remote description...');
-        await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
-
-        // Create answer with enhanced options
-        logIce('Creating answer...');
-        const answer = await currentPC.createAnswer({
-          offerToReceiveVideo: true,
-          offerToReceiveAudio: false
-        });
-        
-        await currentPC.setLocalDescription(answer);
-        logIce('Sending answer to Firebase...');
-        await set(ref(db, "sessions/" + code + "/answer"), answer);
-
-        // Listen for ICE candidates from agent
-        logIce('Setting up ICE candidate exchange...');
-        onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
-          if (currentPC && snap.val()) {
-            try {
-              const candidate = new RTCIceCandidate(snap.val());
-              await currentPC.addIceCandidate(candidate);
-              logIce(`Added remote ICE candidate: ${candidate.type}`);
-            } catch (e) {
-              logIce(`Error adding ICE candidate: ${e.message}`);
-            }
-          }
-        });
-
-        updateStatus('connecting', 'ICE negotiation started...');
-
-        // Extended timeout for ICE establishment
-        setTimeout(() => {
-          if (currentPC && currentPC.iceConnectionState === 'checking') {
-            logIce('ICE still checking after 15 seconds...');
-            updateStatus('connecting', 'Still connecting via TURN...');
-          }
-        }, 15000);
-
-        setTimeout(() => {
-          if (currentPC && !['connected', 'completed'].includes(currentPC.iceConnectionState)) {
-            showError('Connection timeout. This may be due to strict network restrictions. Try using a different network or VPN.');
-            logIce('Connection timeout reached');
-          }
-        }, 45000); // 45 second timeout
-
-      } catch (error) {
-        logIce(`Connection error: ${error.message}`);
-        showError(error.message || 'Connection failed. Please try again.');
-        showLoading(false);
-      }
-    }
-
-    function disconnect() {
-      logIce('Disconnecting...');
-      
-      if (currentPC) {
-        currentPC.close();
-        currentPC = null;
-      }
-
-      if (currentSessionCode) {
-        off(ref(db, "sessions/" + currentSessionCode + "/candidates"));
-        currentSessionCode = null;
-      }
-
-      remoteVideo.srcObject = null;
-      hideVideoContainer();
-      showLoading(false);
-      sessionInput.value = '';
-      updateStatus('connecting', 'Disconnected');
-    }
-
-    function toggleIceDebug() {
-      iceDebug = !iceDebug;
-      iceStatus.style.display = iceDebug ? 'block' : 'none';
-      toggleIceBtn.textContent = iceDebug ? 'Hide ICE' : 'Show ICE';
-      
-      if (iceDebug) {
-        iceStatus.innerHTML = '=== ICE Debug Started ===<br>';
-      }
-    }
-
-    // Auto-format input
-    sessionInput.addEventListener('input', function() {
-      this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    onChildAdded(ref(db,"sessions/"+code+"/candidates"), async (snap)=>{
+      if(currentPC && snap.val()){ try{ await currentPC.addIceCandidate(new RTCIceCandidate(snap.val())); } catch(e){ logIce(`Error adding ICE candidate: ${e.message}`); } }
     });
 
-    // Enter key support
-    sessionInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        joinSession();
-      }
-    });
+  } catch(error){ logIce(`Connection error: ${error.message}`); showError(error.message||'Connection failed.'); showLoading(false);}
+}
 
-    // Event listeners
-    joinBtn.onclick = joinSession;
-    disconnectBtn.onclick = disconnect;
-    toggleIceBtn.onclick = toggleIceDebug;
+function disconnect(){ if(currentPC){ currentPC.close(); currentPC=null; } if(currentSessionCode){ off(ref(db,"sessions/"+currentSessionCode+"/candidates")); currentSessionCode=null; } remoteVideo.srcObject=null; hideVideoContainer(); showLoading(false); sessionInput.value=''; updateStatus('connecting','Disconnected'); }
+function toggleIceDebug(){ iceDebug=!iceDebug; iceStatus.style.display=iceDebug?'block':'none'; toggleIceBtn.textContent=iceDebug?'Hide ICE':'Show ICE'; if(iceDebug){ iceStatus.innerHTML='=== ICE Debug Started ===<br>'; } }
 
-    // Video events
-    remoteVideo.addEventListener('loadedmetadata', () => {
-      logIce('Video metadata loaded successfully');
-    });
+sessionInput.addEventListener('input',function(){ this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,''); });
+sessionInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter'){ joinSession(); } });
 
-    remoteVideo.addEventListener('canplay', () => {
-      logIce('Video ready to play');
-    });
+joinBtn.onclick=joinSession;
+disconnectBtn.onclick=disconnect;
+toggleIceBtn.onclick=toggleIceDebug;
 
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', disconnect);
+remoteVideo.addEventListener('loadedmetadata',()=>{ logIce('Video metadata loaded'); });
+remoteVideo.addEventListener('canplay',()=>{ logIce('Video ready'); });
 
-    // Auto-play handling for mobile
-    document.addEventListener('touchstart', function() {
-      if (remoteVideo.srcObject && remoteVideo.paused) {
-        remoteVideo.play().catch(e => logIce('Autoplay failed: ' + e.message));
-      }
-    }, { once: true });
+window.addEventListener('beforeunload',disconnect);
+document.addEventListener('touchstart',function(){ if(remoteVideo.srcObject && remoteVideo.paused){ remoteVideo.play().catch(e=>logIce('Autoplay failed: '+e.message)); } },{once:true});
 
-    logIce('Viewer initialized with enhanced ICE configuration');
-  </script>
+logIce('Viewer initialized with enhanced ICE configuration');
+</script>
 </body>
 </html>
