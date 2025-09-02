@@ -249,7 +249,7 @@
       <div class="status-dot connecting" id="statusDot"></div>
       <span id="statusText">Connecting...</span>
     </div>
-    <video id="remoteVideo" autoplay playsinline muted webkit-playsinline controls="false"></video>
+    <video id="remoteVideo" autoplay playsinline muted webkit-playsinline></video>
   </div>
 
   <div class="controls" id="controls" style="display:none;">
@@ -377,22 +377,33 @@ function hideVideoContainer() {
 function setupVideoElement() {
   remoteVideo.muted = true;
   remoteVideo.playsInline = true;
+  remoteVideo.autoplay = true;
   remoteVideo.setAttribute('playsinline', 'true');
   remoteVideo.setAttribute('webkit-playsinline', 'true');
+  remoteVideo.setAttribute('autoplay', 'true');
+  remoteVideo.setAttribute('muted', 'true');
   remoteVideo.controls = false;
+  
+  // iOS Safari specific handling
+  if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+    remoteVideo.setAttribute('controls', 'true');
+    logIce('iOS detected: Added controls for initial playback');
+  }
   
   // Force play on user interaction for mobile
   remoteVideo.addEventListener('loadedmetadata', () => {
     logIce('Video metadata loaded');
-    if (isMobile) {
+    setTimeout(() => {
       remoteVideo.play().catch(e => {
         logIce('Initial autoplay failed: ' + e.message);
-        // Try again with user interaction
-        document.addEventListener('touchstart', () => {
-          remoteVideo.play().catch(e => logIce('Touch play failed: ' + e.message));
-        }, { once: true });
+        // For iOS, we need user interaction
+        if (isMobile) {
+          showError('Tap anywhere to start video playback');
+          document.addEventListener('touchstart', forceVideoPlay, { once: true });
+          document.addEventListener('click', forceVideoPlay, { once: true });
+        }
       });
-    }
+    }, 100);
   });
   
   remoteVideo.addEventListener('canplay', () => { 
@@ -402,9 +413,32 @@ function setupVideoElement() {
   
   // Handle video errors
   remoteVideo.addEventListener('error', (e) => {
-    logIce('Video error: ' + e.message);
+    logIce('Video error: ' + (e.target.error ? e.target.error.message : 'Unknown error'));
     showError('Video playback error. Please try reconnecting.');
   });
+  
+  // Handle video stalls
+  remoteVideo.addEventListener('stalled', () => {
+    logIce('Video stalled, attempting to resume');
+    remoteVideo.load();
+  });
+}
+
+function forceVideoPlay() {
+  if (remoteVideo.srcObject && remoteVideo.paused) {
+    remoteVideo.play().then(() => {
+      logIce('Video started playing after user interaction');
+      // Remove controls after successful play on iOS
+      if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+        setTimeout(() => {
+          remoteVideo.controls = false;
+          logIce('Removed controls after successful iOS playback');
+        }, 1000);
+      }
+    }).catch(e => {
+      logIce('User interaction play failed: ' + e.message);
+    });
+  }
 }
 
 async function joinSession() {
@@ -489,23 +523,57 @@ async function joinSession() {
       const stream = event.streams[0];
       
       if (stream) {
+        logIce(`Stream has ${stream.getVideoTracks().length} video tracks and ${stream.getAudioTracks().length} audio tracks`);
+        
+        // Ensure we have video tracks
+        const videoTracks = stream.getVideoTracks();
+        if (videoTracks.length === 0) {
+          logIce('No video tracks in stream');
+          showError('No video stream received. Please check the sharing device.');
+          return;
+        }
+        
+        // Set the stream
         remoteVideo.srcObject = stream;
         showVideoContainer();
         updateStatus('connected', 'Streaming active');
-        showLoading(false);
         
-        // Ensure video plays on mobile
-        if (isMobile) {
+        // iOS Safari specific handling
+        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+          logIce('iOS detected: Applying iOS-specific video handling');
+          
+          // Wait for metadata then try to play
+          remoteVideo.addEventListener('loadedmetadata', () => {
+            logIce('iOS: Video metadata loaded, attempting play');
+            remoteVideo.play().catch(e => {
+              logIce('iOS: Autoplay failed: ' + e.message);
+              showError('iOS: Tap the video to start playback');
+              
+              // Add click handler for iOS
+              remoteVideo.addEventListener('click', () => {
+                remoteVideo.play().then(() => {
+                  logIce('iOS: Video started after user tap');
+                  remoteVideo.controls = false;
+                }).catch(e => logIce('iOS: Manual play failed: ' + e.message));
+              }, { once: true });
+            });
+          }, { once: true });
+          
+        } else {
+          // Non-iOS handling
           setTimeout(() => {
             remoteVideo.play().catch(e => {
-              logIce('Track play failed: ' + e.message);
-              // Require user interaction on mobile
-              document.addEventListener('touchstart', () => {
-                remoteVideo.play().catch(e => logIce('Touch interaction play failed: ' + e.message));
-              }, { once: true });
+              logIce('Non-iOS play failed: ' + e.message);
+              document.addEventListener('touchstart', forceVideoPlay, { once: true });
+              document.addEventListener('click', forceVideoPlay, { once: true });
             });
           }, 100);
         }
+        
+        showLoading(false);
+      } else {
+        logIce('No stream received in track event');
+        showError('Failed to receive video stream');
       }
     };
 
@@ -663,14 +731,49 @@ let userInteracted = false;
 function handleUserInteraction() {
   if (!userInteracted) {
     userInteracted = true;
+    logIce('User interaction detected');
     if (remoteVideo.srcObject && remoteVideo.paused) {
-      remoteVideo.play().catch(e => logIce('User interaction play failed: ' + e.message));
+      remoteVideo.play().then(() => {
+        logIce('Video resumed after user interaction');
+        // Remove controls after successful play on iOS
+        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+          setTimeout(() => {
+            remoteVideo.controls = false;
+          }, 2000);
+        }
+      }).catch(e => logIce('User interaction play failed: ' + e.message));
     }
   }
 }
 
-document.addEventListener('touchstart', handleUserInteraction, { once: true });
-document.addEventListener('click', handleUserInteraction, { once: true });
+document.addEventListener('touchstart', handleUserInteraction);
+document.addEventListener('click', handleUserInteraction);
+
+// iOS specific workarounds
+if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+  logIce('iOS device detected, applying iOS-specific workarounds');
+  
+  // Handle iOS app state changes
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && remoteVideo.srcObject) {
+      logIce('iOS: App became visible, checking video state');
+      setTimeout(() => {
+        if (remoteVideo.paused) {
+          logIce('iOS: Video paused, attempting to resume');
+          remoteVideo.play().catch(e => logIce('iOS: Resume failed: ' + e.message));
+        }
+      }, 500);
+    }
+  });
+  
+  // Handle iOS Safari specific events
+  window.addEventListener('pageshow', () => {
+    if (remoteVideo.srcObject && remoteVideo.paused) {
+      logIce('iOS: Page shown, attempting video play');
+      remoteVideo.play().catch(e => logIce('iOS: Page show play failed: ' + e.message));
+    }
+  });
+}
 
 // Initialize
 logIce(`Viewer initialized (Mobile: ${isMobile}, User Agent: ${navigator.userAgent.substring(0, 50)}...)`);
