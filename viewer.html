@@ -10,15 +10,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
-      --primary-color: #007bff;
-      --secondary-color: #6c757d;
+      --primary-color: #5b5be3;
+      --secondary-color: #7289da;
       --accent-color: #28a745;
-      --bg-start: #667eea;
-      --bg-end: #764ba2;
-      --card-bg: rgba(255, 255, 255, 0.95);
-      --text-color: #333;
-      --error-color: #dc3545;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      --bg-start: #3a1c71;
+      --bg-end: #d76d77;
+      --card-bg: rgba(255, 255, 255, 0.2);
+      --text-color: #fff;
+      --error-color: #f0f0f0;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
       --border-radius: 12px;
       --transition-speed: 0.3s;
     }
@@ -43,7 +43,9 @@
       width: 100%;
       background: var(--card-bg);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-radius: var(--border-radius);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       box-shadow: var(--shadow);
       padding: 30px;
       text-align: center;
@@ -59,6 +61,7 @@
       color: var(--text-color);
       margin-bottom: 20px;
       font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
     .input-group {
       display: flex;
@@ -71,18 +74,19 @@
       width: 100%;
       max-width: 200px;
       padding: 12px 10px;
-      border: 2px solid #ddd;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 8px;
       font-size: 20px;
       text-align: center;
       text-transform: uppercase;
       letter-spacing: 2px;
       outline: none;
-      transition: border-color var(--transition-speed);
+      color: var(--text-color);
+      transition: background var(--transition-speed);
     }
-    #sessionInput:focus {
-      border-color: var(--primary-color);
-    }
+    #sessionInput::placeholder { color: rgba(255, 255, 255, 0.6); }
+    #sessionInput:focus { background: rgba(255, 255, 255, 0.2); }
     #joinBtn {
       width: 100%;
       max-width: 200px;
@@ -97,11 +101,11 @@
       transition: background-color var(--transition-speed), transform var(--transition-speed);
     }
     #joinBtn:hover {
-      background-color: #0056b3;
+      background-color: #4a4ac9;
       transform: translateY(-2px);
     }
     #joinBtn:disabled {
-      background-color: #aaa;
+      background-color: var(--secondary-color);
       cursor: not-allowed;
       transform: none;
     }
@@ -111,18 +115,19 @@
       margin-bottom: 15px;
       font-weight: bold;
       display: none;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
       animation: fadeIn 0.5s ease-in-out;
     }
     .video-container {
       position: relative;
       width: 100%;
-      padding-top: 56.25%; /* 16:9 Aspect Ratio */
-      background: #000;
+      padding-top: 56.25%;
+      background: rgba(0,0,0,0.6);
       border-radius: var(--border-radius);
       overflow: hidden;
       margin-top: 20px;
       display: none;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.4);
     }
     .video-container.active {
       display: block;
@@ -154,7 +159,7 @@
       gap: 10px;
       font-size: 16px;
       font-weight: 500;
-      color: #666;
+      color: var(--text-color);
     }
     .status-dot {
       width: 12px;
@@ -190,7 +195,7 @@
       transition: background-color var(--transition-speed), transform var(--transition-speed);
     }
     .control-btn:hover {
-      background-color: #5a6268;
+      background-color: #5e72b4;
       transform: translateY(-2px);
     }
     .control-btn i {
@@ -202,18 +207,19 @@
       font-size: 12px;
       white-space: pre-wrap;
       word-break: break-all;
-      background: #f0f0f0;
+      background: rgba(0, 0, 0, 0.4);
       padding: 15px;
       border-radius: 8px;
       margin-top: 20px;
       max-height: 200px;
       overflow-y: auto;
       display: none;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+      color: #ddd;
     }
     .device-info {
       font-size: 13px;
-      color: #777;
+      color: rgba(255, 255, 255, 0.7);
       margin-top: 15px;
       line-height: 1.4;
     }
@@ -302,9 +308,6 @@
     let iceDebug = false;
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 3;
-    let isUserInteracted = false;
-    let playAttemptCount = 0;
-    const maxPlayAttempts = 5;
 
     // Enhanced ICE configuration with more TURN servers for mobile reliability
     const pcConfig = {
@@ -407,47 +410,17 @@
 
       if (isMobile) {
         remoteVideo.controls = true;
-        logIce('Mobile: Video controls enabled for user interaction');
       }
-
-      remoteVideo.addEventListener('loadstart', () => {
-        logIce('Video: Load started');
-      });
-
-      remoteVideo.addEventListener('loadeddata', () => {
-        logIce('Video: Data loaded');
-      });
-
-      remoteVideo.addEventListener('loadedmetadata', () => {
-        logIce(`Video: Metadata loaded - ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
-        attemptVideoPlay('metadata loaded', 200);
-      });
-
-      remoteVideo.addEventListener('canplay', () => {
-        logIce('Video: Can play');
-        attemptVideoPlay('canplay event', 100);
-      });
 
       remoteVideo.addEventListener('playing', () => {
         logIce('Video: Playing started');
         updateStatus('connected', 'Video playing');
         playPrompt.classList.remove('visible');
-        playAttemptCount = 0;
-        if (isMobile && !isIOS) {
-          setTimeout(() => remoteVideo.controls = false, 3000);
-        }
       });
 
       remoteVideo.addEventListener('pause', () => {
         logIce('Video: Paused');
         if (remoteVideo.srcObject && isMobile) {
-          playPrompt.classList.add('visible');
-        }
-      });
-
-      remoteVideo.addEventListener('waiting', () => {
-        logIce('Video: Waiting for data');
-        if (isMobile) {
           playPrompt.classList.add('visible');
         }
       });
@@ -461,67 +434,52 @@
         }
       });
 
-      remoteVideo.addEventListener('stalled', () => {
-        logIce('Video: Stalled, attempting to recover');
-        if (isMobile) {
-          playPrompt.classList.add('visible');
+      const playHandler = (e) => {
+        logIce(`User interaction detected: ${e.type}`);
+        playPrompt.classList.remove('visible');
+        const playPromise = remoteVideo.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            logIce('User-initiated play successful.');
+          }).catch(error => {
+            logIce(`User-initiated play failed: ${error.name} - ${error.message}`);
+            playPrompt.classList.add('visible');
+            showError('Video playback failed. Tap the screen to try again.');
+          });
         }
-      });
-
-      remoteVideo.addEventListener('click', () => {
-        attemptVideoPlay('user click', 0);
-      });
-
-      remoteVideo.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        attemptVideoPlay('user touch', 0);
-      });
+      };
+      
+      remoteVideo.addEventListener('click', playHandler);
+      remoteVideo.addEventListener('touchstart', playHandler);
     }
 
-    function attemptVideoPlay(reason, delay = 0) {
-      if (!remoteVideo.srcObject) {
-        logIce(`Play attempt skipped - no source (${reason})`);
-        return;
-      }
+    async function attemptPlayOnStreamReceived() {
+        if (!remoteVideo.srcObject) return;
+        
+        logIce('Attempting to play video after stream received.');
+        
+        // This is the crucial fix for mobile. Disconnect then reconnect the srcObject.
+        const currentStream = remoteVideo.srcObject;
+        remoteVideo.srcObject = null;
+        remoteVideo.srcObject = currentStream;
 
-      if (playAttemptCount >= maxPlayAttempts) {
-        logIce(`Max play attempts (${maxPlayAttempts}) reached for ${reason}`);
-        showError('Unable to start video. Please reconnect or switch to a supported browser.');
-        return;
-      }
-
-      setTimeout(() => {
-        logIce(`Attempting video play (${playAttemptCount + 1}/${maxPlayAttempts}): ${reason}`);
         const playPromise = remoteVideo.play();
 
         if (playPromise !== undefined) {
-          playPromise.then(() => {
-            logIce(`Video play successful: ${reason}`);
+          try {
+            await playPromise;
+            logIce('Initial play attempt successful.');
             playPrompt.classList.remove('visible');
-            isUserInteracted = true;
-            playAttemptCount = 0;
-          }).catch(e => {
-            logIce(`Video play failed (${reason}): ${e.name} - ${e.message}`);
-            playAttemptCount++;
-            if (e.name === 'NotAllowedError') {
-              showError('Tap the video to start playback (browser security requirement)');
-              if (isMobile) {
-                playPrompt.classList.add('visible');
-              }
-              if (playAttemptCount < maxPlayAttempts) {
-                attemptVideoPlay(`retry after ${reason}`, 1000 * Math.min(playAttemptCount, 3));
-              }
-            } else if (e.name === 'AbortError') {
-              logIce('Play aborted, likely due to new play request');
+          } catch (e) {
+            logIce(`Initial play failed: ${e.name} - ${e.message}`);
+            if (isMobile && e.name === 'NotAllowedError') {
+              playPrompt.classList.add('visible');
+              showError('Tap to play video (browser security).');
             } else {
               showError(`Video playback issue (${e.name}): Tap the video or reconnect.`);
-              if (isMobile) {
-                playPrompt.classList.add('visible');
-              }
             }
-          });
+          }
         }
-      }, delay);
     }
 
     async function fetchOfferWithRetry(code, retries = 3, delay = 1000) {
@@ -563,7 +521,6 @@
         currentPC = new RTCPeerConnection(pcConfig);
         currentSessionCode = code;
         reconnectAttempts = 0;
-        playAttemptCount = 0;
 
         currentPC.oniceconnectionstatechange = () => {
           const state = currentPC.iceConnectionState;
@@ -631,41 +588,14 @@
 
         currentPC.ontrack = (event) => {
           logIce('=== TRACK EVENT RECEIVED ===');
-          logIce(`Event streams: ${event.streams.length}`);
-          logIce(`Event track: ${event.track.kind} - ${event.track.readyState}`);
-
           const stream = event.streams[0];
-
           if (stream) {
-            const videoTracks = stream.getVideoTracks();
-            const audioTracks = stream.getAudioTracks();
-
-            logIce(`Stream ID: ${stream.id}`);
-            logIce(`Video tracks: ${videoTracks.length}`);
-            logIce(`Audio tracks: ${audioTracks.length}`);
-
-            if (videoTracks.length > 0) {
-              const videoTrack = videoTracks[0];
-              logIce(`Video track: ${videoTrack.label} - ${videoTrack.readyState} - Enabled: ${videoTrack.enabled}`);
-            } else {
-              logIce('ERROR: No video tracks received');
-              showError('No video stream from agent. Ensure agent is sharing screen.');
-              return;
-            }
-
+            logIce(`Stream ID: ${stream.id}, Video tracks: ${stream.getVideoTracks().length}`);
             remoteVideo.srcObject = stream;
             showVideoContainer();
             updateStatus('connected', 'Stream received');
-
-            setTimeout(() => {
-              logIce(`Video element: ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
-              logIce(`Video paused: ${remoteVideo.paused}`);
-              logIce(`Video muted: ${remoteVideo.muted}`);
-              logIce(`Video readyState: ${remoteVideo.readyState}`);
-              attemptVideoPlay('track received', 500);
-            }, 500);
-
             showLoading(false);
+            attemptPlayOnStreamReceived();
           } else {
             logIce('ERROR: No stream received in track event');
             showError('Failed to receive stream from agent. Please reconnect.');
@@ -755,8 +685,6 @@
       sessionInput.value = '';
       updateStatus('connecting', 'Disconnected');
       reconnectAttempts = 0;
-      playAttemptCount = 0;
-      isUserInteracted = false;
     }
 
     function toggleIceDebug() {
@@ -809,57 +737,22 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && currentPC && remoteVideo.srcObject) {
         logIce('Page became visible, ensuring video plays');
-        attemptVideoPlay('visibility change', 500);
+        if (remoteVideo.paused) {
+          remoteVideo.play().catch(e => logIce('Visibility play failed: ' + e.message));
+        }
       }
     });
 
     window.addEventListener('orientationchange', () => {
       setTimeout(() => {
-        if (remoteVideo.srcObject) {
+        if (remoteVideo.srcObject && remoteVideo.paused) {
           logIce('Orientation changed, attempting to resume');
-          attemptVideoPlay('orientation change', 500);
+          remoteVideo.play().catch(e => logIce('Orientation play failed: ' + e.message));
         }
       }, 500);
     });
 
     window.addEventListener('beforeunload', disconnect);
-
-    let userInteracted = false;
-    function handleUserInteraction() {
-      if (!userInteracted) {
-        userInteracted = true;
-        isUserInteracted = true;
-        logIce('User interaction detected');
-        if (remoteVideo.srcObject && remoteVideo.paused) {
-          attemptVideoPlay('user interaction', 0);
-        }
-      }
-    }
-
-    document.addEventListener('touchstart', handleUserInteraction);
-    document.addEventListener('click', handleUserInteraction);
-
-    if (isIOS) {
-      logIce('iOS device detected, applying iOS-specific workarounds');
-      remoteVideo.controls = true;
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && remoteVideo.srcObject) {
-          logIce('iOS: App became visible, checking video state');
-          setTimeout(() => {
-            if (remoteVideo.paused) {
-              logIce('iOS: Video paused, attempting to resume');
-              attemptVideoPlay('iOS visibility', 500);
-            }
-          }, 500);
-        }
-      });
-      window.addEventListener('pageshow', () => {
-        if (remoteVideo.srcObject && remoteVideo.paused) {
-          logIce('iOS: Page shown, attempting video play');
-          attemptVideoPlay('iOS pageshow', 500);
-        }
-      });
-    }
 
     logIce(`Viewer initialized (Mobile: ${isMobile}, iOS: ${isIOS}, Browser: ${navigator.userAgent.substring(0, 50)}...)`);
 
