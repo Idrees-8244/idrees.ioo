@@ -67,7 +67,6 @@ export async function startScreenShare() {
     }
   };
 
-  // Crucial change: The negotiation logic is now in this event handler
   hostPC.onnegotiationneeded = async () => {
     try {
       const offer = await hostPC.createOffer({
@@ -151,14 +150,15 @@ export async function joinSession(sessionCode) {
 
   viewerPC = new RTCPeerConnection(pcConfig);
 
-  // Simplified ontrack handler due to host side fixes
   viewerPC.ontrack = (evt) => {
     const remoteVideo = document.getElementById('remoteVideo');
-    if (remoteVideo) {
+    const stream = evt.streams[0];
+    if (remoteVideo && stream && stream.getVideoTracks().length > 0) {
       console.log('Viewer received stream track.');
-      remoteVideo.srcObject = evt.streams[0];
-      // Attempt play immediately, as the stream should now be valid
+      remoteVideo.srcObject = stream;
       remoteVideo.play().catch(e => console.error('Auto-play failed:', e));
+    } else {
+      console.warn('Viewer ontrack event without a valid video stream.');
     }
   };
 
