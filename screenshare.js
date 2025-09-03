@@ -1,18 +1,20 @@
 // screenshare.js
 import { db } from "./firebase-config.js";
-import { ref, get, set, push, onValue, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { ref, get, set, push, onValue, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-let hostPC = null, viewerPC = null, localStream = null;
+let hostPC = null, localStream = null;
 
 const pcConfig = {
   iceServers: [
+    // Google STUN Servers
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    { urls: 'stun:stun4.l.google.com:19302' },
-    { urls: 'stun:stun.stunprotocol.org:3478' },
+
+    // Cloudflare STUN Server
     { urls: 'stun:stun.cloudflare.com:3478' },
+
+    // Metered.ca TURN Servers (public)
     {
       urls: 'turn:openrelay.metered.ca:80',
       username: 'openrelayproject',
@@ -28,15 +30,17 @@ const pcConfig = {
       username: 'openrelayproject',
       credential: 'openrelayproject'
     },
+
+    // Anyfirewall.com TURN Servers (public)
     {
       urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
       username: 'webrtc',
       credential: 'webrtc'
     },
     {
-      urls: 'turn:relay1.expressturn.com:3478',
-      username: 'efTAJF7M2TAqVIBR3T',
-      credential: 'uxXXDrkXYdkVBdkl'
+      urls: 'turn:relay.anyfirewall.com:3478',
+      username: 'webrtc',
+      credential: 'webrtc'
     }
   ],
   iceCandidatePoolSize: 10,
@@ -56,7 +60,9 @@ export async function startScreenShare() {
   const sessionCodeDisplay = document.getElementById('sessionCode');
   const preview = document.getElementById('preview');
 
-  if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionCode;
+  if (sessionCodeDisplay) {
+    sessionCodeDisplay.textContent = sessionCode;
+  }
 
   hostPC = new RTCPeerConnection(pcConfig);
 
@@ -79,7 +85,6 @@ export async function startScreenShare() {
         sdp: offer.sdp,
         type: offer.type
       });
-
       console.log('Offer created and sent to Firebase.');
     } catch (error) {
       console.error('Error during negotiation:', error);
@@ -145,20 +150,19 @@ export function stopScreenShare() {
 }
 
 // ----- VIEWER -----
+// NOTE: Viewer logic is now self-contained in viewer.html for better separation of concerns.
+//       This function remains for legacy or direct use but is not used by the new viewer.html
 export async function joinSession(sessionCode) {
   if (!sessionCode) return alert('Session code is required.');
-
-  viewerPC = new RTCPeerConnection(pcConfig);
+  
+  const viewerPC = new RTCPeerConnection(pcConfig);
 
   viewerPC.ontrack = (evt) => {
     const remoteVideo = document.getElementById('remoteVideo');
     const stream = evt.streams[0];
     if (remoteVideo && stream && stream.getVideoTracks().length > 0) {
-      console.log('Viewer received stream track.');
       remoteVideo.srcObject = stream;
       remoteVideo.play().catch(e => console.error('Auto-play failed:', e));
-    } else {
-      console.warn('Viewer ontrack event without a valid video stream.');
     }
   };
 
@@ -189,21 +193,8 @@ export async function joinSession(sessionCode) {
         await viewerPC.addIceCandidate(new RTCIceCandidate(val));
       }
     });
-
-    console.log('Joined session:', sessionCode);
   } catch (error) {
     console.error('Error joining session:', error);
     alert('Failed to join session. Check the code and try again.');
   }
-}
-
-export function disconnect() {
-  if (viewerPC) {
-    viewerPC.close();
-    viewerPC = null;
-  }
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-  }
-  localStream = null;
 }
