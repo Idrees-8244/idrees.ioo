@@ -1,13 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Agent Screen Share</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h2 {
+      margin-bottom: 20px;
+      font-size: 28px;
+      letter-spacing: 1px;
+    }
+    button {
+      background: #00c6ff;
+      background: linear-gradient(45deg, #00c6ff, #0072ff);
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: 0.3s;
+    }
+    button:hover {
+      background: linear-gradient(45deg, #0072ff, #00c6ff);
+      transform: scale(1.05);
+    }
+    .session-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #sessionCode {
+      font-weight: bold;
+      font-size: 22px;
+      background: rgba(255,255,255,0.1);
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    #copyBtn {
+      padding: 8px 14px;
+      font-size: 14px;
+      border-radius: 6px;
+      background: #28a745;
+      background: linear-gradient(45deg, #28a745, #218838);
+    }
+    #copyBtn:hover {
+      background: linear-gradient(45deg, #218838, #28a745);
+    }
+    video {
+      width: 80%;
+      max-width: 900px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      margin-top: 15px;
+      background: #000;
+    }
+  </style>
 </head>
 <body>
   <h2>Agent Screen Share</h2>
   <button id="startShare">Start Screen Share</button>
-  <p>Session Code: <span id="sessionCode"></span></p>
+
+  <div class="session-box">
+    <span>Session Code:</span>
+    <span id="sessionCode">----</span>
+    <button id="copyBtn">Copy</button>
+  </div>
+
   <video id="preview" autoplay muted playsinline></video>
 
   <script type="module">
@@ -22,6 +96,7 @@
     const startBtn = document.getElementById("startShare");
     const sessionEl = document.getElementById("sessionCode");
     const preview = document.getElementById("preview");
+    const copyBtn = document.getElementById("copyBtn");
 
     startBtn.onclick = async () => {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
@@ -49,6 +124,17 @@
           await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
         }
       });
+    };
+
+    // ✅ Copy session code to clipboard
+    copyBtn.onclick = () => {
+      const code = sessionEl.innerText;
+      if (code && code !== "----") {
+        navigator.clipboard.writeText(code).then(() => {
+          copyBtn.textContent = "Copied!";
+          setTimeout(() => (copyBtn.textContent = "Copy"), 2000);
+        });
+      }
     };
   </script>
 </body>
