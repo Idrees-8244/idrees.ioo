@@ -1,4 +1,3 @@
-<!-- viwere.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -202,7 +201,6 @@
       margin:0 auto 10px; 
     }
     @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
-    
     .device-info {
       font-size: 0.8rem;
       color: #666;
@@ -213,7 +211,24 @@
       border-radius: 8px;
       display: none;
     }
-    
+    .play-prompt {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      font-size: 1rem;
+      text-align: center;
+      z-index: 10;
+      display: none;
+      max-width: 80%;
+    }
+    .play-prompt.visible {
+      display: block;
+    }
     @media (max-width:768px) { 
       body { padding:15px; } 
       .container { padding:20px; } 
@@ -250,6 +265,7 @@
       <div class="status-dot connecting" id="statusDot"></div>
       <span id="statusText">Connecting...</span>
     </div>
+    <div class="play-prompt" id="playPrompt">Tap to start video playback</div>
     <video id="remoteVideo" playsinline muted webkit-playsinline controls></video>
   </div>
 
@@ -279,12 +295,14 @@ const toggleIceBtn = document.getElementById("toggleIceBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const iceStatus = document.getElementById("iceStatus");
 const deviceInfo = document.getElementById("deviceInfo");
+const playPrompt = document.getElementById("playPrompt");
 
 let currentPC = null;
 let currentSessionCode = null;
 let iceDebug = false;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 3;
+let isUserInteracted = false;
 
 // Enhanced ICE configuration with more TURN servers for mobile reliability
 const pcConfig = {
@@ -345,7 +363,7 @@ function showError(msg) {
   errorMessage.style.display = 'block'; 
   setTimeout(() => { 
     errorMessage.style.display = 'none'; 
-  }, 10000);
+  }, 15000);
 }
 
 function showLoading(show) { 
@@ -368,75 +386,88 @@ function showVideoContainer() {
 function hideVideoContainer() { 
   videoContainer.classList.remove('active'); 
   controls.style.display = 'none'; 
+  playPrompt.classList.remove('visible');
 }
 
 // Enhanced video handling for mobile
 function setupVideoElement() {
-  // Set all required properties for mobile compatibility
   remoteVideo.muted = true;
   remoteVideo.playsInline = true;
-  remoteVideo.autoplay = false; // Disable autoplay, use manual play
+  remoteVideo.autoplay = false;
   remoteVideo.setAttribute('playsinline', 'true');
   remoteVideo.setAttribute('webkit-playsinline', 'true');
   remoteVideo.setAttribute('muted', 'true');
   remoteVideo.defaultMuted = true;
   remoteVideo.volume = 0;
-  
-  // Always show controls on mobile for easier debugging
+
   if (isMobile) {
     remoteVideo.controls = true;
     logIce('Mobile: Video controls enabled for debugging');
   }
-  
-  // Video event handlers
+
   remoteVideo.addEventListener('loadstart', () => {
     logIce('Video: Load started');
   });
-  
+
   remoteVideo.addEventListener('loadeddata', () => {
     logIce('Video: Data loaded');
   });
-  
+
   remoteVideo.addEventListener('loadedmetadata', () => {
     logIce(`Video: Metadata loaded - ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
-    
-    // Manual play attempt
-    setTimeout(() => {
-      attemptVideoPlay('metadata loaded');
-    }, 200);
+    setTimeout(() => attemptVideoPlay('metadata loaded'), 200);
   });
-  
+
   remoteVideo.addEventListener('canplay', () => { 
     logIce('Video: Can play'); 
     attemptVideoPlay('canplay event');
   });
-  
+
   remoteVideo.addEventListener('playing', () => {
     logIce('Video: Playing started');
     updateStatus('connected', 'Video playing');
+    playPrompt.classList.remove('visible');
+    if (isMobile && !navigator.userAgent.includes('iPhone') && !navigator.userAgent.includes('iPad')) {
+      setTimeout(() => remoteVideo.controls = false, 2000);
+    }
   });
-  
+
   remoteVideo.addEventListener('pause', () => {
     logIce('Video: Paused');
+    if (remoteVideo.srcObject && isMobile) {
+      playPrompt.classList.add('visible');
+    }
   });
-  
+
   remoteVideo.addEventListener('waiting', () => {
     logIce('Video: Waiting for data');
+    if (isMobile) {
+      playPrompt.classList.add('visible');
+    }
   });
-  
+
   remoteVideo.addEventListener('error', (e) => {
     const error = e.target.error;
     logIce('Video error: ' + (error ? `${error.code} - ${error.message}` : 'Unknown error'));
-    showError('Video playback error. Tap to retry or reconnect.');
+    showError('Video playback error. Tap the video to retry or reconnect.');
+    if (isMobile) {
+      playPrompt.classList.add('visible');
+    }
   });
-  
+
   remoteVideo.addEventListener('stalled', () => {
     logIce('Video: Stalled, attempting to recover');
+    if (isMobile) {
+      playPrompt.classList.add('visible');
+    }
   });
-  
-  // Click handler for manual play
+
   remoteVideo.addEventListener('click', () => {
     attemptVideoPlay('user click');
+  });
+
+  remoteVideo.addEventListener('touchstart', () => {
+    attemptVideoPlay('user touch');
   });
 }
 
@@ -445,34 +476,33 @@ function attemptVideoPlay(reason) {
     logIce(`Play attempt skipped - no source (${reason})`);
     return;
   }
-  
+
   logIce(`Attempting video play: ${reason}`);
-  
+
   const playPromise = remoteVideo.play();
-  
+
   if (playPromise !== undefined) {
     playPromise.then(() => {
       logIce(`Video play successful: ${reason}`);
-      // Hide controls after successful play (except on iOS for debugging)
-      if (!navigator.userAgent.includes('iPhone') && !navigator.userAgent.includes('iPad')) {
-        remoteVideo.controls = false;
-      }
+      playPrompt.classList.remove('visible');
+      isUserInteracted = true;
     }).catch(e => {
       logIce(`Video play failed (${reason}): ${e.message}`);
-      
       if (e.name === 'NotAllowedError') {
         showError('Tap the video to start playback (browser security requirement)');
+        if (isMobile) {
+          playPrompt.classList.add('visible');
+        }
       } else if (e.name === 'AbortError') {
         logIce('Play aborted, likely due to new play request');
       } else {
-        showError('Video playback issue. Please tap the video or reconnect.');
+        showError('Video playback issue. Tap the video or reconnect.');
+        if (isMobile) {
+          playPrompt.classList.add('visible');
+        }
       }
     });
   }
-}
-
-function forceVideoPlay() {
-  attemptVideoPlay('force play');
 }
 
 async function joinSession() {
@@ -491,11 +521,9 @@ async function joinSession() {
     currentSessionCode = code;
     reconnectAttempts = 0;
 
-    // Enhanced connection state handling
     currentPC.oniceconnectionstatechange = () => {
       const state = currentPC.iceConnectionState;
       logIce(`ICE connection state: ${state}`);
-      
       switch (state) {
         case 'checking':
           updateStatus('connecting', 'Checking connectivity...');
@@ -541,6 +569,9 @@ async function joinSession() {
     currentPC.onicecandidate = async (event) => { 
       if (event.candidate) { 
         logIce(`New ICE candidate: ${event.candidate.type} (${event.candidate.protocol})`); 
+        if (event.candidate.candidate.includes('typ relay')) {
+          logIce('Using TURN relay for connectivity');
+        }
         const viewerCandidatesRef = ref(db, `signaling/${code}/viewerCandidates`);
         await push(viewerCandidatesRef, event.candidate.toJSON());
       } else { 
@@ -553,7 +584,6 @@ async function joinSession() {
       logIce(`Peer connection state: ${state}`); 
     };
 
-    // Enhanced track handling for mobile
     currentPC.ontrack = (event) => {
       logIce('=== TRACK EVENT RECEIVED ===');
       logIce(`Event streams: ${event.streams.length}`);
@@ -572,21 +602,22 @@ async function joinSession() {
         if (videoTracks.length > 0) {
           const videoTrack = videoTracks[0];
           logIce(`Video track: ${videoTrack.label} - ${videoTrack.readyState} - Enabled: ${videoTrack.enabled}`);
+        } else {
+          logIce('ERROR: No video tracks received');
+          showError('No video stream received. Please reconnect.');
+          return;
         }
         
-        // Always set the stream
         remoteVideo.srcObject = stream;
         showVideoContainer();
         updateStatus('connected', 'Stream received');
         
-        // Log video element state
         setTimeout(() => {
           logIce(`Video element: ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
           logIce(`Video paused: ${remoteVideo.paused}`);
           logIce(`Video muted: ${remoteVideo.muted}`);
           logIce(`Video readyState: ${remoteVideo.readyState}`);
           
-          // Force a play attempt
           attemptVideoPlay('track received');
         }, 500);
         
@@ -597,7 +628,6 @@ async function joinSession() {
       }
     };
 
-    // Check if session exists
     const offerSnap = await get(ref(db, `signaling/${code}/offer`));
     if (!offerSnap.exists()) { 
       throw new Error("Session not found. Please check the code and try again."); 
@@ -606,7 +636,6 @@ async function joinSession() {
     const offer = offerSnap.val();
     await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
 
-    // Create answer with mobile-specific constraints
     const answerConstraints = {
       offerToReceiveVideo: true,
       offerToReceiveAudio: false
@@ -619,23 +648,24 @@ async function joinSession() {
       type: answer.type
     });
 
-    // Listen for ICE candidates from host
     onChildAdded(ref(db, `signaling/${code}/hostCandidates`), async (snap) => {
       if (currentPC && snap.val()) { 
         try { 
           await currentPC.addIceCandidate(new RTCIceCandidate(snap.val())); 
           logIce('ICE candidate added successfully');
+          if (snap.val().candidate.includes('typ relay')) {
+            logIce('Received TURN relay candidate from host');
+          }
         } catch (e) { 
           logIce(`Error adding ICE candidate: ${e.message}`); 
         } 
       }
     });
 
-    // Connection timeout
     setTimeout(() => {
       if (currentPC && currentPC.iceConnectionState !== 'connected' && currentPC.iceConnectionState !== 'completed') {
         logIce('Connection timeout reached');
-        showError('Connection timeout. Please try again.');
+        showError('Connection timeout. Please check your network and try again.');
         showLoading(false);
       }
     }, 30000);
@@ -653,13 +683,11 @@ async function attemptReconnect() {
   reconnectAttempts++;
   logIce(`Reconnect attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
   
-  // Clean up current connection
   if (currentPC) {
     currentPC.close();
     currentPC = null;
   }
   
-  // Wait a moment then retry
   await new Promise(resolve => setTimeout(resolve, 1000));
   await joinSession();
 }
@@ -679,6 +707,7 @@ function disconnect() {
   sessionInput.value = ''; 
   updateStatus('connecting', 'Disconnected');
   reconnectAttempts = 0;
+  isUserInteracted = false;
 }
 
 function toggleIceDebug() { 
@@ -710,7 +739,6 @@ function toggleFullscreen() {
   }
 }
 
-// Event listeners
 sessionInput.addEventListener('input', function() { 
   this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
 });
@@ -726,45 +754,34 @@ disconnectBtn.onclick = disconnect;
 toggleIceBtn.onclick = toggleIceDebug;
 fullscreenBtn.onclick = toggleFullscreen;
 
-// Initialize video element
 setupVideoElement();
 
-// Handle page visibility changes (mobile background/foreground)
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && currentPC && remoteVideo.srcObject) {
     logIce('Page became visible, ensuring video plays');
-    remoteVideo.play().catch(e => logIce('Visibility play failed: ' + e.message));
+    attemptVideoPlay('visibility change');
   }
 });
 
-// Handle mobile orientation changes
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     if (remoteVideo.srcObject) {
-      remoteVideo.play().catch(e => logIce('Orientation play failed: ' + e.message));
+      logIce('Orientation changed, attempting to resume');
+      attemptVideoPlay('orientation change');
     }
   }, 500);
 });
 
-// Cleanup on page unload
 window.addEventListener('beforeunload', disconnect);
 
-// User interaction handler for mobile autoplay
 let userInteracted = false;
 function handleUserInteraction() {
   if (!userInteracted) {
     userInteracted = true;
+    isUserInteracted = true;
     logIce('User interaction detected');
     if (remoteVideo.srcObject && remoteVideo.paused) {
-      remoteVideo.play().then(() => {
-        logIce('Video resumed after user interaction');
-        // Remove controls after successful play on iOS
-        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
-          setTimeout(() => {
-            remoteVideo.controls = false;
-          }, 2000);
-        }
-      }).catch(e => logIce('User interaction play failed: ' + e.message));
+      attemptVideoPlay('user interaction');
     }
   }
 }
@@ -772,36 +789,31 @@ function handleUserInteraction() {
 document.addEventListener('touchstart', handleUserInteraction);
 document.addEventListener('click', handleUserInteraction);
 
-// iOS specific workarounds
 if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
   logIce('iOS device detected, applying iOS-specific workarounds');
-  
-  // Handle iOS app state changes
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && remoteVideo.srcObject) {
       logIce('iOS: App became visible, checking video state');
       setTimeout(() => {
         if (remoteVideo.paused) {
           logIce('iOS: Video paused, attempting to resume');
-          remoteVideo.play().catch(e => logIce('iOS: Resume failed: ' + e.message));
+          attemptVideoPlay('iOS visibility');
         }
       }, 500);
     }
   });
-  
-  // Handle iOS Safari specific events
   window.addEventListener('pageshow', () => {
     if (remoteVideo.srcObject && remoteVideo.paused) {
       logIce('iOS: Page shown, attempting video play');
-      remoteVideo.play().catch(e => logIce('iOS: Page show play failed: ' + e.message));
+      attemptVideoPlay('iOS pageshow');
     }
   });
+  // Force controls on iOS for user interaction
+  remoteVideo.controls = true;
 }
 
-// Initialize
 logIce(`Viewer initialized (Mobile: ${isMobile}, User Agent: ${navigator.userAgent.substring(0, 50)}...)`);
 
-// Display device info for debugging
 if (isMobile) {
   deviceInfo.innerHTML = `
     Mobile Device Detected<br>
