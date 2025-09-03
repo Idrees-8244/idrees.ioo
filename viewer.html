@@ -9,25 +9,26 @@
   <title>Screen Viewer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
-      --primary-color: #008cff;
-      --secondary-color: #7289da;
-      --accent-color: #32cd32;
-      --bg-start: #3264a8;
-      --bg-end: #69a7d3;
-      --card-bg: rgba(255, 255, 255, 0.95);
+      --primary-color: #2c3e50;
+      --secondary-color: #34495e;
+      --accent-color: #3498db;
+      --bg-start: #f8f9fa;
+      --bg-end: #e9ecef;
+      --card-bg: #ffffff;
       --text-color: #333;
+      --light-text-color: #6c757d;
       --error-color: #e74c3c;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05);
-      --border-radius: 16px;
-      --transition-speed: 0.4s;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --border-radius: 8px;
+      --transition-speed: 0.3s;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Roboto', sans-serif;
       background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
       min-height: 100vh;
       display: flex;
@@ -47,35 +48,35 @@
       background: var(--card-bg);
       border-radius: var(--border-radius);
       box-shadow: var(--shadow);
-      padding: 40px;
+      padding: 30px;
       text-align: center;
       position: relative;
-      animation: fadeIn 0.8s ease-in-out;
+      animation: fadeIn 0.6s ease-in-out;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
     h1 {
-      font-size: 32px;
+      font-size: 28px;
       color: var(--primary-color);
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       font-weight: 700;
     }
     .input-group {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 25px;
+      gap: 12px;
+      margin-bottom: 20px;
     }
     #sessionInput {
       width: 100%;
       max-width: 200px;
-      padding: 15px 10px;
-      border: 2px solid #ddd;
-      border-radius: 10px;
-      font-size: 22px;
+      padding: 12px 10px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 20px;
       text-align: center;
       text-transform: uppercase;
       letter-spacing: 2px;
@@ -83,29 +84,29 @@
       transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
       color: var(--text-color);
     }
-    #sessionInput::placeholder { color: rgba(51, 51, 51, 0.6); }
+    #sessionInput::placeholder { color: var(--light-text-color); }
     #sessionInput:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 4px rgba(0, 140, 255, 0.2);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
     }
     #joinBtn {
       width: 100%;
       max-width: 200px;
-      padding: 15px;
+      padding: 12px;
       border: none;
       background-color: var(--primary-color);
       color: white;
-      border-radius: 10px;
+      border-radius: var(--border-radius);
       cursor: pointer;
-      font-size: 18px;
-      font-weight: 600;
-      box-shadow: 0 4px 15px rgba(0, 140, 255, 0.3);
+      font-size: 16px;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
     }
     #joinBtn:hover {
-      background-color: #0066cc;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0, 140, 255, 0.4);
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     }
     #joinBtn:disabled {
       background-color: #aaa;
@@ -115,8 +116,8 @@
     }
     #errorMessage {
       color: var(--error-color);
-      margin-top: -15px;
-      margin-bottom: 15px;
+      margin-top: -10px;
+      margin-bottom: 10px;
       font-weight: bold;
       display: none;
       animation: fadeIn 0.5s ease-in-out;
@@ -144,34 +145,24 @@
       object-fit: contain;
       background: #000;
     }
-    #loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-size: 18px;
-      z-index: 10;
-      display: none;
-    }
     .status-bar {
-      margin-top: 25px;
+      margin-top: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #666;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--light-text-color);
     }
     .status-dot {
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       animation: pulse 1.5s infinite ease-in-out;
     }
-    .status-dot.connecting { background-color: orange; }
-    .status-dot.connected { background-color: var(--accent-color); animation: none; }
+    .status-dot.connecting { background-color: #f39c12; }
+    .status-dot.connected { background-color: #2ecc71; animation: none; }
     .status-dot.error { background-color: var(--error-color); animation: none; }
     @keyframes pulse {
       0%, 100% { transform: scale(1); opacity: 1; }
@@ -181,50 +172,51 @@
       display: none;
       justify-content: center;
       flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 25px;
+      gap: 10px;
+      margin-top: 20px;
     }
     .control-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px 18px;
-      border: none;
-      border-radius: 10px;
-      background-color: var(--secondary-color);
-      color: white;
+      padding: 10px 15px;
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      background-color: #f0f0f0;
+      color: var(--text-color);
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
     }
     .control-btn:hover {
-      background-color: #5e72b4;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background-color: #e0e0e0;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     }
     .control-btn i {
-      margin-right: 8px;
+      margin-right: 6px;
     }
     .debug-status {
       text-align: left;
       font-family: monospace;
-      font-size: 12px;
+      font-size: 11px;
       white-space: pre-wrap;
       word-break: break-all;
-      background: #f0f0f0;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      max-height: 200px;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 15px;
+      max-height: 180px;
       overflow-y: auto;
       display: none;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #eee;
     }
     .device-info {
-      font-size: 13px;
+      font-size: 12px;
       color: #777;
-      margin-top: 15px;
+      margin-top: 12px;
       line-height: 1.4;
     }
     #playPrompt {
@@ -232,16 +224,17 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.8);
       color: white;
-      padding: 20px;
-      border-radius: 12px;
+      padding: 15px 25px;
+      border-radius: var(--border-radius);
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
+      font-weight: bold;
       text-align: center;
       z-index: 20;
       display: none;
-      transition: opacity 0.5s;
+      transition: opacity 0.3s;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
     #playPrompt.visible {
@@ -253,8 +246,8 @@
       transition: transform 0.2s;
     }
     @media (max-width: 600px) {
-      .container { padding: 30px; }
-      h1 { font-size: 28px; }
+      .container { padding: 20px; }
+      h1 { font-size: 24px; }
       .input-group { flex-direction: column; }
       #sessionInput, #joinBtn { max-width: 100%; }
     }
@@ -263,29 +256,28 @@
 <body>
 
   <div class="container">
-    <h1>View Your Trip</h1>
+    <h1>Connect to Screen</h1>
     <div class="input-group">
       <input type="text" id="sessionInput" placeholder="Enter Code" maxlength="6">
-      <button id="joinBtn">Join Your Trip</button>
+      <button id="joinBtn">Join Session</button>
     </div>
     <div id="errorMessage"></div>
     <div class="device-info" id="deviceInfo"></div>
 
     <div class="video-container" id="videoContainer">
       <video id="remoteVideo" autoplay playsinline></video>
-      <div id="loading">Connecting...</div>
       <div id="playPrompt">Tap to Play</div>
     </div>
 
     <div class="status-bar" id="statusBar">
-      <div id="statusDot" class="status-dot connecting"></div>
-      <div id="statusText">Enter your booking code to begin</div>
+      <div id="statusDot" class="status-dot"></div>
+      <div id="statusText">Enter your code to begin</div>
     </div>
 
     <div class="controls" id="controls">
       <button id="disconnectBtn" class="control-btn"><i class="fas fa-times"></i> Disconnect</button>
       <button id="fullscreenBtn" class="control-btn"><i class="fas fa-expand"></i> Fullscreen</button>
-      <button id="toggleIceBtn" class="control-btn"><i class="fas fa-code"></i> Show ICE</button>
+      <button id="toggleIceBtn" class="control-btn"><i class="fas fa-code"></i> Show Debug</button>
     </div>
 
     <div class="debug-status" id="iceStatus"></div>
@@ -299,7 +291,6 @@
     const sessionInput = document.getElementById("sessionInput");
     const remoteVideo = document.getElementById("remoteVideo");
     const errorMessage = document.getElementById("errorMessage");
-    const loading = document.getElementById("loading");
     const videoContainer = document.getElementById("videoContainer");
     const controls = document.getElementById("controls");
     const statusBar = document.getElementById("statusBar");
@@ -315,8 +306,9 @@
     let currentPC = null;
     let currentSessionCode = null;
     let iceDebug = false;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 3;
+    let reconnectionTimeout = null;
+    let iceReconnectAttempts = 0;
+    const maxIceReconnects = 3;
 
     const pcConfig = {
       iceServers: [
@@ -362,10 +354,10 @@
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isNonSafariIOS = isIOS && !navigator.userAgent.includes('Safari');
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-    function logIce(msg) {
-      console.log(`[ICE] ${msg}`);
+    function logStatus(msg) {
+      console.log(`[Status] ${msg}`);
       if (iceDebug) {
         const time = new Date().toLocaleTimeString();
         iceStatus.innerHTML += `[${time}] ${msg}<br>`;
@@ -378,20 +370,19 @@
       errorMessage.style.display = 'block';
       setTimeout(() => {
         errorMessage.style.display = 'none';
-      }, 20000);
-      logIce(`UI Error: ${msg}`);
+      }, 15000);
+      logStatus(`UI Error: ${msg}`);
     }
 
     function showLoading(show) {
-      loading.style.display = show ? 'block' : 'none';
       joinBtn.disabled = show;
-      joinBtn.textContent = show ? 'Connecting...' : 'Join Your Trip';
+      joinBtn.textContent = show ? 'Connecting...' : 'Join Session';
     }
 
     function updateStatus(status, text) {
       statusDot.className = 'status-dot ' + status;
       statusText.textContent = text;
-      logIce(`Status: ${text}`);
+      logStatus(`Status: ${text}`);
     }
 
     function showVideoContainer() {
@@ -405,261 +396,164 @@
       playPrompt.classList.remove('visible');
     }
 
+    function handleVideoPlay() {
+      logStatus('Attempting to play video...');
+      const playPromise = remoteVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          logStatus('Video: Play successful.');
+          updateStatus('connected', 'Live Stream');
+          playPrompt.classList.remove('visible');
+        }).catch(error => {
+          logStatus(`Video: Auto-play failed: ${error.name} - ${error.message}`);
+          playPrompt.classList.add('visible');
+          updateStatus('error', 'Tap to Play');
+        });
+      }
+    }
+
     function setupVideoElement() {
-      remoteVideo.muted = true;
+      remoteVideo.muted = false; // We want sound, so we will manage play with user interaction
       remoteVideo.playsInline = true;
-      remoteVideo.autoplay = false;
+      remoteVideo.autoplay = false; // Autoplay is unreliable on mobile, so we disable it
       remoteVideo.setAttribute('playsinline', 'true');
       remoteVideo.setAttribute('webkit-playsinline', 'true');
-      remoteVideo.setAttribute('muted', 'true');
-      remoteVideo.defaultMuted = true;
-      remoteVideo.volume = 0;
+      remoteVideo.defaultMuted = false;
 
-      if (isMobile) {
-        remoteVideo.controls = true;
-      }
-
-      remoteVideo.addEventListener('playing', () => {
-        logIce('Video: Playing started');
-        updateStatus('connected', 'Video playing');
-        playPrompt.classList.remove('visible');
-      });
-
-      remoteVideo.addEventListener('pause', () => {
-        logIce('Video: Paused');
-        if (remoteVideo.srcObject && isMobile) {
-          playPrompt.classList.add('visible');
-        }
-      });
-
-      remoteVideo.addEventListener('error', (e) => {
-        const error = e.target.error;
-        logIce('Video error: ' + (error ? `${error.code} - ${error.message}` : 'Unknown error'));
-        showError('Video playback error. Tap the video to retry or reconnect.');
-        if (isMobile) {
-          playPrompt.classList.add('visible');
-        }
-      });
-
+      // Handle the "Tap to Play" logic
       const playHandler = (e) => {
-        logIce(`User interaction detected: ${e.type}`);
-        playPrompt.classList.remove('visible');
-        const playPromise = remoteVideo.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            logIce('User-initiated play successful.');
-          }).catch(error => {
-            logIce(`User-initiated play failed: ${error.name} - ${error.message}`);
-            playPrompt.classList.add('visible');
-            showError('Video playback failed. Tap the screen to try again.');
-          });
+        e.preventDefault();
+        logStatus('User interaction detected on video element.');
+        if (remoteVideo.paused || remoteVideo.ended || remoteVideo.srcObject) {
+          handleVideoPlay();
         }
       };
       
-      remoteVideo.addEventListener('click', playHandler);
-      remoteVideo.addEventListener('touchstart', playHandler);
-    }
+      playPrompt.addEventListener('click', playHandler);
+      playPrompt.addEventListener('touchstart', playHandler);
+      videoContainer.addEventListener('click', playHandler);
+      videoContainer.addEventListener('touchstart', playHandler);
 
-    async function fetchOfferWithRetry(code, retries = 3, delay = 1000) {
-      updateStatus('connecting', 'Finding your session...');
-      for (let i = 0; i < retries; i++) {
-        try {
-          const offerSnap = await get(ref(db, `signaling/${code}/offer`));
-          if (!offerSnap.exists()) {
-            throw new Error("Session not found. Please check the code or ensure the agent is active.");
-          }
-          logIce('Offer fetched successfully.');
-          return offerSnap.val();
-        } catch (error) {
-          logIce(`Offer fetch attempt ${i + 1}/${retries} failed: ${error.message}`);
-          if (i < retries - 1) {
-            updateStatus('connecting', `Retrying... (attempt ${i + 2})`);
-            await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
-          } else {
-            throw error;
-          }
-        }
-      }
-    }
-
-    async function processAnswer(code) {
-      updateStatus('connecting', 'Creating your video link...');
-      const answerConstraints = {
-        offerToReceiveVideo: true,
-        offerToReceiveAudio: false
-      };
-      const answer = await currentPC.createAnswer(answerConstraints);
-      await currentPC.setLocalDescription(answer);
-      await set(ref(db, `signaling/${code}/answer`), {
-        sdp: answer.sdp,
-        type: answer.type
+      remoteVideo.addEventListener('playing', () => {
+        logStatus('Video: Playing started');
+        updateStatus('connected', 'Live Stream');
       });
-      logIce('Answer created and sent.');
-      updateStatus('connecting', 'Awaiting connection...');
+
+      remoteVideo.addEventListener('pause', () => {
+        logStatus('Video: Paused');
+        if (remoteVideo.srcObject) {
+          updateStatus('connecting', 'Paused');
+        }
+      });
+      
+      remoteVideo.addEventListener('error', (e) => {
+        const error = e.target.error;
+        logStatus('Video error: ' + (error ? `${error.code} - ${error.message}` : 'Unknown error'));
+        showError('Video playback error. Tap the video to retry.');
+        if (remoteVideo.srcObject) {
+          playPrompt.classList.add('visible');
+        }
+      });
     }
 
-    async function joinSession() {
-      const code = sessionInput.value.trim().toUpperCase();
-      if (!code || code.length !== 6) {
-        showError("Please enter a valid 6-digit session code");
-        return;
-      }
-
-      if (isNonSafariIOS) {
-        showError("iOS: Please open this page in Safari for video support.");
-        return;
-      }
-
+    async function connectToSession(code) {
       showLoading(true);
-      errorMessage.style.display = 'none';
-      logIce(`Starting connection to session: ${code} (Mobile: ${isMobile}, iOS: ${isIOS}, Browser: ${navigator.userAgent.substring(0, 50)}...)`);
-
+      updateStatus('connecting', 'Finding your session...');
       try {
         currentPC = new RTCPeerConnection(pcConfig);
         currentSessionCode = code;
-        reconnectAttempts = 0;
+        iceReconnectAttempts = 0;
 
         currentPC.oniceconnectionstatechange = () => {
           const state = currentPC.iceConnectionState;
-          logIce(`ICE connection state: ${state}`);
+          logStatus(`ICE connection state: ${state}`);
           switch (state) {
             case 'checking':
               updateStatus('connecting', 'Checking connectivity...');
               break;
             case 'connected':
             case 'completed':
-              updateStatus('connected', 'Connected via ICE');
-              showLoading(false);
-              reconnectAttempts = 0;
-              logIce(`Connection summary: ICE=${state}, Peer=${currentPC.connectionState}`);
+              updateStatus('connected', 'Connected');
               break;
             case 'disconnected':
               updateStatus('connecting', 'Reconnecting...');
-              if (reconnectAttempts < maxReconnectAttempts) {
-                setTimeout(() => {
-                  if (currentPC && currentPC.iceConnectionState === 'disconnected') {
-                    logIce('Attempting ICE restart...');
-                    currentPC.restartIce();
-                    reconnectAttempts++;
-                  }
-                }, 2000);
+              if (iceReconnectAttempts < maxIceReconnects) {
+                logStatus('Attempting ICE restart...');
+                currentPC.restartIce();
+                iceReconnectAttempts++;
               }
               break;
             case 'failed':
               updateStatus('error', 'Connection failed');
-              if (reconnectAttempts < maxReconnectAttempts) {
-                showError(`Connection failed. Retrying... (${reconnectAttempts + 1}/${maxReconnectAttempts})`);
-                setTimeout(() => attemptReconnect(), 3000);
-              } else {
-                showError('Connection failed after multiple attempts. Check network or agent status.');
-                showLoading(false);
-              }
-              break;
-            case 'closed':
-              updateStatus('connecting', 'Connection closed');
+              showError('Connection failed. Please check network or reload.');
               break;
           }
-        };
-
-        currentPC.onicegatheringstatechange = () => {
-          logIce(`ICE gathering state: ${currentPC.iceGatheringState}`);
         };
 
         currentPC.onicecandidate = async (event) => {
           if (event.candidate) {
-            const candidateType = event.candidate.candidate.includes('typ host') ? 'host' :
-                                 event.candidate.candidate.includes('typ srflx') ? 'srflx' :
-                                 event.candidate.candidate.includes('typ relay') ? 'relay' : 'unknown';
-            logIce(`New ICE candidate: ${candidateType} (${event.candidate.protocol})`);
-            const viewerCandidatesRef = ref(db, `signaling/${code}/viewerCandidates`);
-            await push(viewerCandidatesRef, event.candidate.toJSON());
-          } else {
-            logIce('ICE candidate gathering finished');
+            logStatus('New ICE candidate generated.');
+            await push(ref(db, `signaling/${code}/viewerCandidates`), event.candidate.toJSON());
           }
-        };
-
-        currentPC.onconnectionstatechange = () => {
-          const state = currentPC.connectionState;
-          logIce(`Peer connection state: ${state}`);
         };
 
         currentPC.ontrack = (event) => {
-          logIce('=== TRACK EVENT RECEIVED ===');
+          logStatus('Received stream track.');
           const stream = event.streams[0];
           if (stream && stream.getVideoTracks().length > 0) {
-            logIce(`Stream ID: ${stream.id}, Video tracks: ${stream.getVideoTracks().length}`);
             showVideoContainer();
-            updateStatus('connected', 'Stream received');
-            showLoading(false);
-            
             remoteVideo.srcObject = stream;
-            remoteVideo.play().catch(e => {
-                logIce(`Auto-play failed: ${e.name} - ${e.message}`);
-                playPrompt.classList.add('visible');
-                showError('Tap to play video (browser security).');
-            });
-
+            updateStatus('connecting', 'Stream Ready');
+            handleVideoPlay(); // Attempt to play the video with our robust handler
           } else {
-            logIce('ERROR: No stream or video track received in track event');
-            showError('Failed to receive stream from agent. Please reconnect.');
+            logStatus('No video track found in stream.');
+            updateStatus('error', 'Stream Error');
+            showError('Failed to receive video stream. Please check agent status.');
           }
+          showLoading(false);
         };
+        
+        // Fetch offer and set remote description
+        const offerSnap = await get(ref(db, `signaling/${code}/offer`));
+        const offerVal = offerSnap.val();
+        if (!offerVal) {
+          throw new Error('No active session with this code.');
+        }
+        await currentPC.setRemoteDescription(new RTCSessionDescription(offerVal));
 
-        const offer = await fetchOfferWithRetry(code);
-        await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
-        await processAnswer(code);
-
+        // Create and send answer
+        const answer = await currentPC.createAnswer({
+          offerToReceiveVideo: true,
+          offerToReceiveAudio: true // Requesting audio too
+        });
+        await currentPC.setLocalDescription(answer);
+        await set(ref(db, `signaling/${code}/answer`), {
+          sdp: answer.sdp,
+          type: answer.type
+        });
+        
+        // Listen for ICE candidates from the host
         onChildAdded(ref(db, `signaling/${code}/hostCandidates`), async (snap) => {
           if (currentPC && snap.val()) {
             try {
-              const candidate = snap.val();
-              const candidateType = candidate.candidate.includes('typ host') ? 'host' :
-                                   candidate.candidate.includes('typ srflx') ? 'srflx' :
-                                   candidate.candidate.includes('typ relay') ? 'relay' : 'unknown';
-              logIce(`Received ICE candidate: ${candidateType}`);
-              await currentPC.addIceCandidate(new RTCIceCandidate(candidate));
-              logIce('ICE candidate added successfully');
+              await currentPC.addIceCandidate(new RTCIceCandidate(snap.val()));
+              logStatus('Host ICE candidate added.');
             } catch (e) {
-              logIce(`Error adding ICE candidate: ${e.message}`);
-              showError(`ICE candidate error: ${e.message}. Check network or agent.`);
+              logStatus(`Error adding host ICE candidate: ${e.message}`);
             }
           }
         });
 
-        setTimeout(() => {
-          if (currentPC && currentPC.iceConnectionState !== 'connected' && currentPC.iceConnectionState !== 'completed') {
-            logIce('Connection timeout reached');
-            showError('Connection timeout. Check network or ensure agent is active.');
-            showLoading(false);
-          }
-        }, 30000);
-
       } catch (error) {
-        logIce(`Connection error: ${error.message}`);
-        let errorMsg = error.message || 'Connection failed. Please try again.';
-        if (error.message.includes('permission denied')) {
-          errorMsg = 'Firebase access denied. Check session code or contact support.';
-        } else if (error.message.includes('Session not found')) {
-          errorMsg += ' Ensure the agent is running on desktop.';
+        logStatus(`Connection error: ${error.message}`);
+        let errorMsg = error.message;
+        if (error.message.includes('Session not found')) {
+          errorMsg = 'No active session. Please check the code or ensure the agent is running.';
         }
         showError(errorMsg);
+        updateStatus('error', 'Failed');
         showLoading(false);
       }
-    }
-
-    async function attemptReconnect() {
-      if (reconnectAttempts >= maxReconnectAttempts) return;
-
-      reconnectAttempts++;
-      logIce(`Reconnect attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
-
-      if (currentPC) {
-        currentPC.close();
-        currentPC = null;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 1000 * reconnectAttempts));
-      await joinSession();
     }
 
     function disconnect() {
@@ -676,35 +570,30 @@
       showLoading(false);
       sessionInput.value = '';
       updateStatus('connecting', 'Disconnected');
-      reconnectAttempts = 0;
     }
 
     function toggleIceDebug() {
       iceDebug = !iceDebug;
       iceStatus.style.display = iceDebug ? 'block' : 'none';
-      toggleIceBtn.innerHTML = iceDebug ? '<i class="fas fa-eye-slash"></i> Hide ICE' : '<i class="fas fa-code"></i> Show ICE';
+      toggleIceBtn.innerHTML = iceDebug ? '<i class="fas fa-eye-slash"></i> Hide Debug' : '<i class="fas fa-code"></i> Show Debug';
       if (iceDebug) {
-        iceStatus.innerHTML = '=== ICE Debug Started ===<br>';
+        iceStatus.innerHTML = '=== Debug Log Started ===<br>';
       }
     }
 
     function toggleFullscreen() {
-      const element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+      const element = document.fullscreenElement || document.webkitFullscreenElement;
       if (!element) {
         if (videoContainer.requestFullscreen) {
           videoContainer.requestFullscreen();
         } else if (videoContainer.webkitRequestFullscreen) {
           videoContainer.webkitRequestFullscreen();
-        } else if (videoContainer.msRequestFullscreen) {
-          videoContainer.msRequestFullscreen();
         }
       } else {
         if (document.exitFullscreen) {
           document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
           document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
         }
       }
     }
@@ -715,44 +604,25 @@
 
     sessionInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        joinSession();
+        connectToSession(sessionInput.value.trim().toUpperCase());
       }
     });
 
-    joinBtn.onclick = joinSession;
+    joinBtn.onclick = () => connectToSession(sessionInput.value.trim().toUpperCase());
     disconnectBtn.onclick = disconnect;
     toggleIceBtn.onclick = toggleIceDebug;
     fullscreenBtn.onclick = toggleFullscreen;
 
     setupVideoElement();
 
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && currentPC && remoteVideo.srcObject) {
-        logIce('Page became visible, ensuring video plays');
-        if (remoteVideo.paused) {
-          remoteVideo.play().catch(e => logIce('Visibility play failed: ' + e.message));
-        }
-      }
-    });
-
-    window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        if (remoteVideo.srcObject && remoteVideo.paused) {
-          logIce('Orientation changed, attempting to resume');
-          remoteVideo.play().catch(e => logIce('Orientation play failed: ' + e.message));
-        }
-      }, 500);
-    });
-
     window.addEventListener('beforeunload', disconnect);
 
-    logIce(`Viewer initialized (Mobile: ${isMobile}, iOS: ${isIOS}, Browser: ${navigator.userAgent.substring(0, 50)}...)`);
+    logStatus(`Viewer initialized (Mobile: ${isMobile}, iOS: ${isIOS}, Safari: ${isSafari}, User Agent: ${navigator.userAgent.substring(0, 50)}...)`);
 
     if (isMobile) {
       deviceInfo.innerHTML = `
-        Mobile Device Detected<br>
-        ${isIOS ? 'iOS: Use Safari for video support' : 'Android: Use Chrome for best experience'}<br>
-        Audio: Muted | Playsinline: Enabled
+        **Mobile Device Detected**<br>
+        ${isIOS ? 'iOS: Best experience on Safari.' : 'Android: Best experience on Chrome.'}
       `;
     }
   </script>
