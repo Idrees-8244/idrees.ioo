@@ -13,23 +13,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
-      --primary-color: #34495e;
-      --secondary-color: #2c3e50;
-      --accent-color: #2ecc71;
-      --bg-start: #f8f9fa;
-      --bg-end: #e9ecef;
+      --blue-sky-light: #89cff0; /* Lighter blue */
+      --blue-sky-dark: #4682b4;  /* Steel blue */
       --card-bg: #ffffff;
       --text-color: #333;
       --light-text-color: #6c757d;
+      --primary-button-bg: #007bff; /* A nice blue for buttons */
+      --primary-button-hover: #0056b3;
+      --accent-color: #2ecc71; /* Green for copy/success */
       --error-color: #e74c3c;
-      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      --border-radius: 8px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      --border-radius: 12px;
       --transition-speed: 0.3s;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Roboto', sans-serif;
-      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      background: linear-gradient(135deg, var(--blue-sky-light) 0%, var(--blue-sky-dark) 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -43,7 +43,48 @@
       -webkit-user-select: none;
       user-select: none;
       font-size: 16px;
+      position: relative;
+      overflow: hidden; /* Hide overflowing planes/paths */
     }
+
+    /* Animated background elements */
+    .flight-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%),
+                        radial-gradient(circle at 90% 80%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%),
+                        linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: 0.4;
+      z-index: 0;
+    }
+    
+    .plane-icon {
+      position: absolute;
+      font-size: 24px; /* Larger icon */
+      color: rgba(255, 255, 255, 0.7); /* White with transparency */
+      animation: fly linear infinite;
+      z-index: 1;
+      text-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+    .plane-icon:nth-child(1) { top: 10%; left: -5%; animation-duration: 20s; animation-delay: 0s; }
+    .plane-icon:nth-child(2) { top: 50%; left: -10%; animation-duration: 25s; animation-delay: 5s; transform: scaleX(-1); }
+    .plane-icon:nth-child(3) { top: 80%; left: -15%; animation-duration: 18s; animation-delay: 10s; }
+    .plane-icon:nth-child(4) { top: 25%; left: 105%; animation-duration: 22s; animation-delay: 3s; transform: scaleX(-1); }
+    .plane-icon:nth-child(5) { top: 65%; left: 110%; animation-duration: 28s; animation-delay: 8s; }
+
+    @keyframes fly {
+      0% { transform: translateX(-100vw) rotateZ(0deg); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateX(100vw) rotateZ(0deg); opacity: 0; }
+    }
+    /* End Animated background elements */
+
     .container {
       background: var(--card-bg);
       padding: 30px;
@@ -51,42 +92,44 @@
       box-shadow: var(--shadow);
       text-align: center;
       width: 100%;
-      max-width: 400px;
+      max-width: 450px;
       animation: fadeIn 0.6s ease-in-out;
+      position: relative; /* Ensure content is above background elements */
+      z-index: 10;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(15px); }
       to { opacity: 1; transform: translateY(0); }
     }
     h2 {
-      margin-bottom: 20px;
-      font-size: 28px;
-      color: var(--primary-color);
+      margin-bottom: 15px;
+      font-size: 32px;
+      color: var(--blue-sky-dark);
       font-weight: 700;
     }
     .subtext {
-      margin-bottom: 20px;
-      font-size: 16px;
+      margin-bottom: 25px;
+      font-size: 17px;
       color: var(--light-text-color);
     }
     .action-button {
       width: 100%;
-      padding: 12px 24px;
+      padding: 14px 28px;
       border: none;
       border-radius: var(--border-radius);
-      background-color: var(--primary-color);
+      background-color: var(--primary-button-bg);
       color: white;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 500;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 15px;
       transition: all var(--transition-speed);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     }
     .action-button:hover:not(:disabled) {
-      background-color: var(--secondary-color);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      background-color: var(--primary-button-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
     }
     .action-button:disabled {
       background-color: #aaa;
@@ -95,33 +138,33 @@
       box-shadow: none;
     }
     .session-info {
-      margin-top: 20px;
-      padding: 15px;
-      border: 1px dashed #ddd;
+      margin-top: 30px;
+      padding: 20px;
+      border: 2px dashed #e0e0e0;
       border-radius: var(--border-radius);
-      background-color: #f8f8f8;
+      background-color: #fcfcfc;
     }
     .session-info h3 {
-      font-size: 14px;
+      font-size: 15px;
       color: var(--light-text-color);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .session-box {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
     }
     #sessionCode {
-      font-family: monospace;
-      font-size: 28px;
+      font-family: 'Roboto Mono', monospace; /* Monospace for code */
+      font-size: 36px;
       font-weight: bold;
-      color: var(--primary-color);
-      letter-spacing: 2px;
+      color: var(--blue-sky-dark);
+      letter-spacing: 3px;
     }
     .copy-btn {
-      padding: 8px 12px;
-      font-size: 14px;
+      padding: 10px 15px;
+      font-size: 15px;
       border: none;
       border-radius: var(--border-radius);
       background-color: var(--accent-color);
@@ -130,19 +173,20 @@
       transition: all var(--transition-speed);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
     .copy-btn:hover {
       background-color: #27ae60;
+      transform: translateY(-1px);
     }
     video {
       width: 100%;
-      max-height: 40vh;
-      margin-top: 20px;
+      max-height: 45vh;
+      margin-top: 25px;
       border-radius: var(--border-radius);
-      background: black;
+      background: #000;
       object-fit: contain;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       display: none;
     }
     video.active {
@@ -151,31 +195,32 @@
     .error-message {
       background: #f8d7da;
       color: #721c24;
-      padding: 15px;
+      padding: 18px;
       border-radius: var(--border-radius);
-      margin-top: 15px;
+      margin-top: 20px;
       display: none;
       text-align: center;
-      border-left: 4px solid #dc3545;
+      border-left: 5px solid #dc3545;
+      font-weight: 500;
     }
     .status-bar {
-      margin-top: 20px;
+      margin-top: 25px;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
-      font-size: 14px;
+      gap: 10px;
+      font-size: 15px;
       font-weight: 500;
       color: var(--light-text-color);
     }
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       animation: pulse 1.5s infinite ease-in-out;
     }
     .status-dot.connecting { background-color: #f39c12; }
-    .status-dot.connected { background-color: #2ecc71; animation: none; }
+    .status-dot.connected { background-color: var(--accent-color); animation: none; }
     .status-dot.error { background-color: var(--error-color); animation: none; }
     @keyframes pulse {
       0%, 100% { transform: scale(1); opacity: 1; }
@@ -183,39 +228,51 @@
     }
     .loading {
       text-align: center;
-      padding: 20px;
+      padding: 25px;
       color: #666;
       display: none;
     }
     .loading-spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid var(--primary-color);
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--blue-sky-dark);
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
+      margin: 0 auto 12px;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .device-info {
-      font-size: 12px;
+      font-size: 13px;
       color: #777;
-      margin-top: 12px;
-      line-height: 1.4;
+      margin-top: 15px;
+      line-height: 1.5;
     }
     @media (max-width: 768px) {
       body { padding: 15px; }
-      .container { padding: 20px; }
-      h2 { font-size: 24px; }
-      .session-info { padding: 10px; }
-      video { max-height: 30vh; }
+      .container { padding: 25px; max-width: 95%; }
+      h2 { font-size: 28px; }
+      .subtext { font-size: 16px; }
+      .session-info { padding: 15px; }
+      #sessionCode { font-size: 30px; }
+      video { max-height: 35vh; }
+      .action-button { font-size: 16px; padding: 12px 24px; }
+      .copy-btn { font-size: 13px; padding: 8px 12px; }
+      .plane-icon { font-size: 20px; }
     }
   </style>
 </head>
 <body>
+  <div class="flight-pattern"></div>
+  <i class="fas fa-plane plane-icon"></i>
+  <i class="fas fa-plane plane-icon"></i>
+  <i class="fas fa-plane plane-icon"></i>
+  <i class="fas fa-plane plane-icon"></i>
+  <i class="fas fa-plane plane-icon"></i>
+
   <div class="container">
     <h2>Agent Screen Share</h2>
-    <p class="subtext">Share your screen with viewers</p>
+    <p class="subtext">Share your screen with viewers seamlessly</p>
     <button id="startShare" class="action-button"><i class="fas fa-play"></i> Start Screen Share</button>
     <div class="error-message" id="errorMessage"></div>
     <div class="loading" id="loading">
@@ -224,7 +281,7 @@
     </div>
     
     <div class="session-info" id="sessionInfo" style="display:none;">
-      <h3>Session Code:</h3>
+      <h3>Your Session Code:</h3>
       <div class="session-box">
         <span id="sessionCode">------</span>
         <button id="copyBtn" class="copy-btn"><i class="fas fa-copy"></i> Copy</button>
@@ -235,7 +292,7 @@
     
     <div class="status-bar" id="statusBar">
       <div class="status-dot connecting" id="statusDot"></div>
-      <div id="statusText">Ready</div>
+      <div id="statusText">Ready to start</div>
     </div>
 
     <div class="device-info" id="deviceInfo"></div>
@@ -272,6 +329,9 @@
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.stunprotocol.org:3478' },
         { urls: 'stun:stun.cloudflare.com:3478' },
         { 
           urls: 'turn:openrelay.metered.ca:80', 
@@ -287,16 +347,6 @@
           urls: 'turn:openrelay.metered.ca:443?transport=tcp', 
           username: 'openrelayproject', 
           credential: 'openrelayproject' 
-        },
-        {
-          urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
-          username: 'webrtc',
-          credential: 'webrtc'
-        },
-        {
-          urls: 'turn:relay1.expressturn.com:3478',
-          username: 'efTAJF7M2TAqVIBR3T',
-          credential: 'uxXXDrkXYdkVBdkl'
         }
       ],
       iceCandidatePoolSize: 10,
@@ -315,7 +365,7 @@
     function showLoading(show) {
       loading.style.display = show ? 'block' : 'none';
       startBtn.disabled = show;
-      startBtn.textContent = show ? 'Starting...' : 'Start Screen Share';
+      startBtn.textContent = show ? 'Starting...' : '<i class="fas fa-play"></i> Start Screen Share';
     }
 
     function updateStatus(status, text) {
@@ -451,7 +501,7 @@
       preview.classList.remove('active');
       sessionEl.innerText = '------';
       sessionInfoEl.style.display = 'none';
-      updateStatus('connecting', 'Ready');
+      updateStatus('connecting', 'Ready to start');
       showLoading(false);
     }
 
@@ -470,7 +520,7 @@
     
     if (isMobile) {
       deviceInfo.innerHTML = `
-        Mobile Device Detected | Audio disabled for compatibility
+        <i class="fas fa-mobile-alt"></i> Mobile Device Detected | Audio disabled for compatibility
       `;
     }
   </script>
