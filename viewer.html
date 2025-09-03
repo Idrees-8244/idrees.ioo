@@ -372,6 +372,7 @@ function showError(msg) {
   setTimeout(() => { 
     errorMessage.style.display = 'none'; 
   }, 20000);
+  logIce(`UI Error: ${msg}`);
 }
 
 function showLoading(show) { 
@@ -488,7 +489,7 @@ function attemptVideoPlay(reason, delay = 0) {
 
   if (playAttemptCount >= maxPlayAttempts) {
     logIce(`Max play attempts (${maxPlayAttempts}) reached for ${reason}`);
-    showError('Unable to start video. Please reconnect or try a different browser.');
+    showError('Unable to start video. Please reconnect or switch to a supported browser.');
     return;
   }
 
@@ -510,14 +511,13 @@ function attemptVideoPlay(reason, delay = 0) {
           if (isMobile) {
             playPrompt.classList.add('visible');
           }
-          // Retry after delay
           if (playAttemptCount < maxPlayAttempts) {
-            attemptVideoPlay(`retry after ${reason}`, 1000 * playAttemptCount);
+            attemptVideoPlay(`retry after ${reason}`, 1000 * Math.min(playAttemptCount, 3));
           }
         } else if (e.name === 'AbortError') {
           logIce('Play aborted, likely due to new play request');
         } else {
-          showError('Video playback issue. Tap the video or reconnect.');
+          showError(`Video playback issue (${e.name}): Tap the video or reconnect.`);
           if (isMobile) {
             playPrompt.classList.add('visible');
           }
@@ -532,13 +532,13 @@ async function fetchOfferWithRetry(code, retries = 3, delay = 1000) {
     try {
       const offerSnap = await get(ref(db, `signaling/${code}/offer`));
       if (!offerSnap.exists()) {
-        throw new Error("Session not found. Please check the code and try again.");
+        throw new Error("Session not found. Please check the code or ensure the agent is active.");
       }
       return offerSnap.val();
     } catch (error) {
       logIce(`Offer fetch attempt ${i + 1}/${retries} failed: ${error.message}`);
       if (i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
       } else {
         throw error;
       }
@@ -600,7 +600,7 @@ async function joinSession() {
             showError(`Connection failed. Retrying... (${reconnectAttempts + 1}/${maxReconnectAttempts})`);
             setTimeout(() => attemptReconnect(), 3000);
           } else {
-            showError('Connection failed after multiple attempts. Check your network or try a different browser.');
+            showError('Connection failed after multiple attempts. Check network or agent status.');
             showLoading(false);
           }
           break;
@@ -652,7 +652,7 @@ async function joinSession() {
           logIce(`Video track: ${videoTrack.label} - ${videoTrack.readyState} - Enabled: ${videoTrack.enabled}`);
         } else {
           logIce('ERROR: No video tracks received');
-          showError('No video stream received. Please reconnect.');
+          showError('No video stream from agent. Ensure agent is sharing screen.');
           return;
         }
         
@@ -671,7 +671,7 @@ async function joinSession() {
         showLoading(false);
       } else {
         logIce('ERROR: No stream received in track event');
-        showError('Failed to receive video stream. Please reconnect.');
+        showError('Failed to receive stream from agent. Please reconnect.');
       }
     };
 
@@ -702,6 +702,7 @@ async function joinSession() {
           logIce('ICE candidate added successfully');
         } catch (e) { 
           logIce(`Error adding ICE candidate: ${e.message}`); 
+          showError(`ICE candidate error: ${e.message}. Check network or agent.`);
         } 
       }
     });
@@ -709,16 +710,18 @@ async function joinSession() {
     setTimeout(() => {
       if (currentPC && currentPC.iceConnectionState !== 'connected' && currentPC.iceConnectionState !== 'completed') {
         logIce('Connection timeout reached');
-        showError('Connection timeout. Check your network or try a different browser.');
+        showError('Connection timeout. Check network or ensure agent is active.');
         showLoading(false);
       }
     }, 30000);
 
   } catch (error) { 
-    logIce(`Connection error: ${error.message}`); 
+    logIce(`Connection error: ${error.message}`);
     let errorMsg = error.message || 'Connection failed. Please try again.';
     if (error.message.includes('permission denied')) {
-      errorMsg = 'Firebase access denied. Please check session code or contact support.';
+      errorMsg = 'Firebase access denied. Check session code or contact support.';
+    } else if (error.message.includes('Session not found')) {
+      errorMsg += ' Ensure the agent is running on desktop.';
     }
     showError(errorMsg); 
     showLoading(false);
@@ -736,7 +739,7 @@ async function attemptReconnect() {
     currentPC = null;
   }
   
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 1000 * reconnectAttempts));
   await joinSession();
 }
 
