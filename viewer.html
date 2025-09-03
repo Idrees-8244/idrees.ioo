@@ -1,3 +1,4 @@
+<!-- viwere.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -261,7 +262,7 @@
 
 <script type="module">
 import { db } from "./firebase-config.js";
-import { ref, get, set, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { ref, get, set, push, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const joinBtn = document.getElementById("joinBtn");
 const sessionInput = document.getElementById("sessionInput");
@@ -295,8 +296,6 @@ const pcConfig = {
     { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.stunprotocol.org:3478' },
     { urls: 'stun:stun.cloudflare.com:3478' },
-    
-    // Multiple TURN servers for better mobile reliability
     { 
       urls: 'turn:openrelay.metered.ca:80', 
       username: 'openrelayproject', 
@@ -312,8 +311,6 @@ const pcConfig = {
       username: 'openrelayproject', 
       credential: 'openrelayproject' 
     },
-    
-    // Additional free TURN servers for mobile networks
     {
       urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
       username: 'webrtc',
@@ -544,6 +541,8 @@ async function joinSession() {
     currentPC.onicecandidate = async (event) => { 
       if (event.candidate) { 
         logIce(`New ICE candidate: ${event.candidate.type} (${event.candidate.protocol})`); 
+        const viewerCandidatesRef = ref(db, `signaling/${code}/viewerCandidates`);
+        await push(viewerCandidatesRef, event.candidate.toJSON());
       } else { 
         logIce('ICE candidate gathering finished'); 
       } 
@@ -599,7 +598,7 @@ async function joinSession() {
     };
 
     // Check if session exists
-    const offerSnap = await get(ref(db, "sessions/" + code + "/offer"));
+    const offerSnap = await get(ref(db, `signaling/${code}/offer`));
     if (!offerSnap.exists()) { 
       throw new Error("Session not found. Please check the code and try again."); 
     }
@@ -615,10 +614,13 @@ async function joinSession() {
 
     const answer = await currentPC.createAnswer(answerConstraints);
     await currentPC.setLocalDescription(answer);
-    await set(ref(db, "sessions/" + code + "/answer"), answer);
+    await set(ref(db, `signaling/${code}/answer`), {
+      sdp: answer.sdp,
+      type: answer.type
+    });
 
-    // Listen for ICE candidates
-    onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
+    // Listen for ICE candidates from host
+    onChildAdded(ref(db, `signaling/${code}/hostCandidates`), async (snap) => {
       if (currentPC && snap.val()) { 
         try { 
           await currentPC.addIceCandidate(new RTCIceCandidate(snap.val())); 
@@ -668,7 +670,7 @@ function disconnect() {
     currentPC = null; 
   } 
   if (currentSessionCode) { 
-    off(ref(db, "sessions/" + currentSessionCode + "/candidates")); 
+    off(ref(db, `signaling/${currentSessionCode}/hostCandidates`)); 
     currentSessionCode = null; 
   } 
   remoteVideo.srcObject = null; 
@@ -808,9 +810,6 @@ if (isMobile) {
   `;
 }
 </script>
-</body>
-</html>
-
 <!--Start of Tawk.to Script-->
 <script type="text/javascript">
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
@@ -824,3 +823,5 @@ s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
 <!--End of Tawk.to Script-->
+</body>
+</html>
