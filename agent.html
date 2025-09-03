@@ -1,88 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <title>Agent Screen Share</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: #fff;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
     }
     h2 {
       margin-bottom: 20px;
-      font-size: 28px;
-      letter-spacing: 1px;
+      color: #333;
     }
     button {
-      background: #00c6ff;
-      background: linear-gradient(45deg, #00c6ff, #0072ff);
+      padding: 10px 20px;
       border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      color: #fff;
       border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: 0.3s;
+      margin-top: 10px;
+      transition: background 0.3s;
     }
     button:hover {
-      background: linear-gradient(45deg, #0072ff, #00c6ff);
-      transform: scale(1.05);
+      background: #1d4ed8;
+    }
+    p {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #555;
     }
     .session-box {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-top: 8px;
     }
-    #sessionCode {
-      font-weight: bold;
-      font-size: 22px;
-      background: rgba(255,255,255,0.1);
-      padding: 6px 12px;
+    .copy-btn {
+      padding: 5px 10px;
+      font-size: 12px;
+      border: none;
       border-radius: 6px;
-    }
-    #copyBtn {
-      padding: 8px 14px;
-      font-size: 14px;
-      border-radius: 6px;
-      background: #28a745;
-      background: linear-gradient(45deg, #28a745, #218838);
-    }
-    #copyBtn:hover {
-      background: linear-gradient(45deg, #218838, #28a745);
+      background: #10b981;
+      color: white;
+      cursor: pointer;
     }
     video {
-      width: 80%;
-      max-width: 900px;
-      border: 3px solid rgba(255,255,255,0.2);
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      width: 100%;
       margin-top: 15px;
-      background: #000;
+      border-radius: 8px;
+      background: black;
     }
   </style>
 </head>
 <body>
-  <h2>Agent Screen Share</h2>
-  <button id="startShare">Start Screen Share</button>
-
-  <div class="session-box">
-    <span>Session Code:</span>
-    <span id="sessionCode">----</span>
-    <button id="copyBtn">Copy</button>
+  <div class="container">
+    <h2>Agent Screen Share</h2>
+    <button id="startShare">Start Screen Share</button>
+    <p>Session Code:</p>
+    <div class="session-box">
+      <span id="sessionCode">----</span>
+      <button id="copyBtn" class="copy-btn">Copy</button>
+    </div>
+    <video id="preview" autoplay muted playsinline></video>
   </div>
-
-  <video id="preview" autoplay muted playsinline></video>
 
   <script type="module">
     import { db, auth } from "./firebase-config.js";
@@ -106,7 +103,6 @@
       sessionEl.innerText = sessionCode;
 
       const pc = new RTCPeerConnection();
-
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
       pc.onicecandidate = (event) => {
@@ -126,16 +122,25 @@
       });
     };
 
-    // ✅ Copy session code to clipboard
     copyBtn.onclick = () => {
-      const code = sessionEl.innerText;
-      if (code && code !== "----") {
-        navigator.clipboard.writeText(code).then(() => {
-          copyBtn.textContent = "Copied!";
-          setTimeout(() => (copyBtn.textContent = "Copy"), 2000);
-        });
-      }
+      navigator.clipboard.writeText(sessionEl.innerText);
+      copyBtn.innerText = "Copied!";
+      setTimeout(() => copyBtn.innerText = "Copy", 2000);
     };
   </script>
+
+  <!--Start of Tawk.to Script-->
+  <script type="text/javascript">
+  var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+  (function(){
+  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+  s1.async=true;
+  s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
+  s1.charset='UTF-8';
+  s1.setAttribute('crossorigin','*');
+  s0.parentNode.insertBefore(s1,s0);
+  })();
+  </script>
+  <!--End of Tawk.to Script-->
 </body>
 </html>
