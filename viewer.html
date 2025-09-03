@@ -83,6 +83,7 @@
       transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
       color: var(--text-color);
     }
+    #sessionInput::placeholder { color: rgba(51, 51, 51, 0.6); }
     #sessionInput:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 4px rgba(0, 140, 255, 0.2);
@@ -317,7 +318,6 @@
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 3;
 
-    // Enhanced ICE configuration with more TURN servers for mobile reliability
     const pcConfig = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -460,34 +460,6 @@
       remoteVideo.addEventListener('touchstart', playHandler);
     }
 
-    async function attemptPlayOnStreamReceived(stream) {
-        if (!stream) return;
-        
-        logIce('Attempting to play video after stream received.');
-        
-        // This is the crucial fix for mobile. Disconnect then reconnect the srcObject.
-        remoteVideo.srcObject = null;
-        remoteVideo.srcObject = stream;
-
-        const playPromise = remoteVideo.play();
-
-        if (playPromise !== undefined) {
-          try {
-            await playPromise;
-            logIce('Initial play attempt successful.');
-            playPrompt.classList.remove('visible');
-          } catch (e) {
-            logIce(`Initial play failed: ${e.name} - ${e.message}`);
-            if (isMobile && e.name === 'NotAllowedError') {
-              playPrompt.classList.add('visible');
-              showError('Tap to play video (browser security).');
-            } else {
-              showError(`Video playback issue (${e.name}): Tap the video or reconnect.`);
-            }
-          }
-        }
-    }
-
     async function fetchOfferWithRetry(code, retries = 3, delay = 1000) {
       for (let i = 0; i < retries; i++) {
         try {
@@ -600,7 +572,15 @@
             showVideoContainer();
             updateStatus('connected', 'Stream received');
             showLoading(false);
-            attemptPlayOnStreamReceived(stream);
+            
+            // This is the new, simplified playback logic
+            remoteVideo.srcObject = stream;
+            remoteVideo.play().catch(e => {
+                logIce(`Auto-play failed: ${e.name} - ${e.message}`);
+                playPrompt.classList.add('visible');
+                showError('Tap to play video (browser security).');
+            });
+
           } else {
             logIce('ERROR: No stream or video track received in track event');
             showError('Failed to receive stream from agent. Please reconnect.');
