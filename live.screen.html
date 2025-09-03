@@ -1,27 +1,185 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>ScreenShare — Home</title>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #333;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 20px;
+      color: #333;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    p {
+      color: #666;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+    .row {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 15px 25px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn.viewer {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(40, 167, 69, 0.4);
+    }
+    .btn.viewer:hover {
+      box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4);
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #e1e5e9;
+      margin: 20px 0;
+    }
+    ul {
+      text-align: left;
+      color: #666;
+      font-size: 0.95rem;
+      margin: 0 auto;
+      max-width: 80%;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #333;
+    }
+    .device-info {
+      font-size: 0.8rem;
+      color: #666;
+      text-align: center;
+      margin-top: 20px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      display: none;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+      .card {
+        padding: 20px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      .btn {
+        padding: 12px 20px;
+        font-size: 1rem;
+      }
+      .device-info {
+        display: block;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="card">
-    <h1>ScreenShare</h1>
-    <p>Choose a role:</p>
+    <h1>📺 ScreenShare</h1>
+    <p>Choose your role to start sharing or viewing a screen</p>
     <div class="row">
-      <a class="btn" href="login.html">I'm an agent (login & share)</a>
-      <a class="btn" href="viewer.html">I'm a customer (enter code)</a>
+      <a class="btn" href="login.html">I'm an Agent (Login & Share)</a>
+      <a class="btn viewer" href="viewer.html">I'm a Customer (Enter Code)</a>
     </div>
-    <hr/>
+    <hr>
     <p>Notes:</p>
     <ul>
-      <li>Agent logs in, generates a 6-digit code and starts sharing.</li>
-      <li>Customer enters the code on the viewer page to see the screen.</li>
-      <li>Firebase logic is centralized in <code>firebase-config.js</code></li>
+      <li>Agents log in, generate a 6-digit code, and start sharing their screen.</li>
+      <li>Customers enter the code on the viewer page to watch the shared screen.</li>
+      <li>Firebase logic is centralized in <code>firebase-config.js</code>.</li>
+      <li>Optimized for both desktop and mobile devices.</li>
     </ul>
+    <div class="device-info" id="deviceInfo">
+      Mobile Device Detected<br>
+      Optimized for touch and small screens
+    </div>
   </div>
+
+  <!--Start of Tawk.to Script-->
+  <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+      var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+      s1.async=true;
+      s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
+      s1.charset='UTF-8';
+      s1.setAttribute('crossorigin','*');
+      s0.parentNode.insertBefore(s1,s0);
+    })();
+  </script>
+  <!--End of Tawk.to Script-->
+  <script>
+    // Mobile detection for device info
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      document.getElementById('deviceInfo').innerHTML = `
+        Mobile Device Detected<br>
+        ${navigator.userAgent.includes('iPhone') ? 'iOS Safari' : 'Android Chrome'}<br>
+        Touch Optimized
+      `;
+    }
+  </script>
 </body>
 </html>
-
