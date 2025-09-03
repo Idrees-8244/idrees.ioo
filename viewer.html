@@ -461,22 +461,41 @@
     }
 
     async function fetchOfferWithRetry(code, retries = 3, delay = 1000) {
+      updateStatus('connecting', 'Finding your session...');
       for (let i = 0; i < retries; i++) {
         try {
           const offerSnap = await get(ref(db, `signaling/${code}/offer`));
           if (!offerSnap.exists()) {
             throw new Error("Session not found. Please check the code or ensure the agent is active.");
           }
+          logIce('Offer fetched successfully.');
           return offerSnap.val();
         } catch (error) {
           logIce(`Offer fetch attempt ${i + 1}/${retries} failed: ${error.message}`);
           if (i < retries - 1) {
+            updateStatus('connecting', `Retrying... (attempt ${i + 2})`);
             await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
           } else {
             throw error;
           }
         }
       }
+    }
+
+    async function processAnswer(code) {
+      updateStatus('connecting', 'Creating your video link...');
+      const answerConstraints = {
+        offerToReceiveVideo: true,
+        offerToReceiveAudio: false
+      };
+      const answer = await currentPC.createAnswer(answerConstraints);
+      await currentPC.setLocalDescription(answer);
+      await set(ref(db, `signaling/${code}/answer`), {
+        sdp: answer.sdp,
+        type: answer.type
+      });
+      logIce('Answer created and sent.');
+      updateStatus('connecting', 'Awaiting connection...');
     }
 
     async function joinSession() {
@@ -573,7 +592,6 @@
             updateStatus('connected', 'Stream received');
             showLoading(false);
             
-            // This is the new, simplified playback logic
             remoteVideo.srcObject = stream;
             remoteVideo.play().catch(e => {
                 logIce(`Auto-play failed: ${e.name} - ${e.message}`);
@@ -589,18 +607,7 @@
 
         const offer = await fetchOfferWithRetry(code);
         await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
-
-        const answerConstraints = {
-          offerToReceiveVideo: true,
-          offerToReceiveAudio: false
-        };
-
-        const answer = await currentPC.createAnswer(answerConstraints);
-        await currentPC.setLocalDescription(answer);
-        await set(ref(db, `signaling/${code}/answer`), {
-          sdp: answer.sdp,
-          type: answer.type
-        });
+        await processAnswer(code);
 
         onChildAdded(ref(db, `signaling/${code}/hostCandidates`), async (snap) => {
           if (currentPC && snap.val()) {
