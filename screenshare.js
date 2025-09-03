@@ -1,209 +1,642 @@
-// screenshare.js
-import { db } from "./firebase-config.js";
-import { ref, get, set, push, onValue, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-let hostPC = null, viewerPC = null, localStream = null;
-
-const pcConfig = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    { urls: 'stun:stun4.l.google.com:19302' },
-    { urls: 'stun:stun.stunprotocol.org:3478' },
-    { urls: 'stun:stun.cloudflare.com:3478' },
-    {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
-    },
-    {
-      urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
-      username: 'webrtc',
-      credential: 'webrtc'
-    },
-    {
-      urls: 'turn:relay1.expressturn.com:3478',
-      username: 'efTAJF7M2TAqVIBR3T',
-      credential: 'uxXXDrkXYdkVBdkl'
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Screen Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #34495e;
+      --accent-color: #3498db;
+      --bg-start: #f8f9fa;
+      --bg-end: #e9ecef;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --light-text-color: #6c757d;
+      --error-color: #e74c3c;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --border-radius: 8px;
+      --transition-speed: 0.3s;
     }
-  ],
-  iceCandidatePoolSize: 10,
-  iceTransportPolicy: 'all',
-  bundlePolicy: 'max-bundle',
-  rtcpMuxPolicy: 'require',
-  sdpSemantics: 'unified-plan'
-};
-
-function generateSessionCode() {
-  return Math.random().toString(36).substr(2, 6).toUpperCase();
-}
-
-// ----- HOST -----
-export async function startScreenShare() {
-  const sessionCode = generateSessionCode();
-  const sessionCodeDisplay = document.getElementById('sessionCode');
-  const preview = document.getElementById('preview');
-
-  if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionCode;
-
-  hostPC = new RTCPeerConnection(pcConfig);
-
-  hostPC.onicecandidate = (evt) => {
-    if (evt.candidate) {
-      const hostCandidatesRef = ref(db, `signaling/${sessionCode}/hostCandidates`);
-      push(hostCandidatesRef, evt.candidate.toJSON());
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text-color);
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      font-size: 16px;
     }
-  };
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 30px;
+      text-align: center;
+      position: relative;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+      font-size: 28px;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    #sessionInput {
+      width: 100%;
+      max-width: 200px;
+      padding: 12px 10px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 20px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      outline: none;
+      transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+      color: var(--text-color);
+    }
+    #sessionInput::placeholder { color: var(--light-text-color); }
+    #sessionInput:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    }
+    #joinBtn {
+      width: 100%;
+      max-width: 200px;
+      padding: 12px;
+      border: none;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+    }
+    #joinBtn:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    #joinBtn:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    #errorMessage {
+      color: var(--error-color);
+      margin-top: -10px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .video-container {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: #000;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      margin-top: 20px;
+      display: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .video-container.active {
+      display: block;
+    }
+    #remoteVideo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    .status-bar {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--light-text-color);
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    .status-dot.connecting { background-color: #f39c12; }
+    .status-dot.connected { background-color: #2ecc71; animation: none; }
+    .status-dot.error { background-color: var(--error-color); animation: none; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+    }
+    .controls {
+      display: none;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .control-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 15px;
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      background-color: #f0f0f0;
+      color: var(--text-color);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+    }
+    .control-btn:hover {
+      background-color: #e0e0e0;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    }
+    .control-btn i {
+      margin-right: 6px;
+    }
+    .debug-status {
+      text-align: left;
+      font-family: monospace;
+      font-size: 11px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 15px;
+      max-height: 180px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #eee;
+    }
+    .device-info {
+      font-size: 12px;
+      color: #777;
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+    #playPrompt {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 15px 25px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      z-index: 20;
+      display: none;
+      transition: opacity 0.3s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    #playPrompt.visible {
+      display: block;
+      opacity: 1;
+    }
+    #playPrompt:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      transition: transform 0.2s;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 20px; }
+      h1 { font-size: 24px; }
+      .input-group { flex-direction: column; }
+      #sessionInput, #joinBtn { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
 
-  hostPC.onnegotiationneeded = async () => {
-    try {
-      const offer = await hostPC.createOffer({
-        offerToReceiveVideo: false,
-        offerToReceiveAudio: false
+  <div class="container">
+    <h1>Connect to Screen</h1>
+    <div class="input-group">
+      <input type="text" id="sessionInput" placeholder="Enter Code" maxlength="6">
+      <button id="joinBtn">Join Session</button>
+    </div>
+    <div id="errorMessage"></div>
+    <div class="device-info" id="deviceInfo"></div>
+
+    <div class="video-container" id="videoContainer">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div id="playPrompt">Tap to Play</div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div id="statusDot" class="status-dot"></div>
+      <div id="statusText">Enter your code to begin</div>
+    </div>
+
+    <div class="controls" id="controls">
+      <button id="disconnectBtn" class="control-btn"><i class="fas fa-times"></i> Disconnect</button>
+      <button id="fullscreenBtn" class="control-btn"><i class="fas fa-expand"></i> Fullscreen</button>
+      <button id="toggleIceBtn" class="control-btn"><i class="fas fa-code"></i> Show Debug</button>
+    </div>
+
+    <div class="debug-status" id="iceStatus"></div>
+  </div>
+
+  <script type="module">
+    import { db } from "./firebase-config.js";
+    import { ref, get, set, push, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const joinBtn = document.getElementById("joinBtn");
+    const sessionInput = document.getElementById("sessionInput");
+    const remoteVideo = document.getElementById("remoteVideo");
+    const errorMessage = document.getElementById("errorMessage");
+    const videoContainer = document.getElementById("videoContainer");
+    const controls = document.getElementById("controls");
+    const statusBar = document.getElementById("statusBar");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const disconnectBtn = document.getElementById("disconnectBtn");
+    const toggleIceBtn = document.getElementById("toggleIceBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const iceStatus = document.getElementById("iceStatus");
+    const deviceInfo = document.getElementById("deviceInfo");
+    const playPrompt = document.getElementById("playPrompt");
+
+    let currentPC = null;
+    let currentSessionCode = null;
+    let iceDebug = false;
+    let reconnectionTimeout = null;
+    let iceReconnectAttempts = 0;
+    const maxIceReconnects = 3;
+
+    const pcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.stunprotocol.org:3478' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
+          username: 'webrtc',
+          credential: 'webrtc'
+        },
+        {
+          urls: 'turn:relay1.expressturn.com:3478',
+          username: 'efTAJF7M2TAqVIBR3T',
+          credential: 'uxXXDrkXYdkVBdkl'
+        }
+      ],
+      iceCandidatePoolSize: 10,
+      iceTransportPolicy: 'all',
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+      sdpSemantics: 'unified-plan'
+    };
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    function logStatus(msg) {
+      console.log(`[Status] ${msg}`);
+      if (iceDebug) {
+        const time = new Date().toLocaleTimeString();
+        iceStatus.innerHTML += `[${time}] ${msg}<br>`;
+        iceStatus.scrollTop = iceStatus.scrollHeight;
+      }
+    }
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorMessage.style.display = 'block';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 15000);
+      logStatus(`UI Error: ${msg}`);
+    }
+
+    function showLoading(show) {
+      joinBtn.disabled = show;
+      joinBtn.textContent = show ? 'Connecting...' : 'Join Session';
+    }
+
+    function updateStatus(status, text) {
+      statusDot.className = 'status-dot ' + status;
+      statusText.textContent = text;
+      logStatus(`Status: ${text}`);
+    }
+
+    function showVideoContainer() {
+      videoContainer.classList.add('active');
+      controls.style.display = 'flex';
+    }
+
+    function hideVideoContainer() {
+      videoContainer.classList.remove('active');
+      controls.style.display = 'none';
+      playPrompt.classList.remove('visible');
+    }
+
+    function handleVideoPlay() {
+      logStatus('Attempting to play video...');
+      const playPromise = remoteVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          logStatus('Video: Play successful.');
+          updateStatus('connected', 'Live Stream');
+          playPrompt.classList.remove('visible');
+        }).catch(error => {
+          logStatus(`Video: Auto-play failed: ${error.name} - ${error.message}`);
+          playPrompt.classList.add('visible');
+          updateStatus('error', 'Tap to Play');
+        });
+      }
+    }
+
+    function setupVideoElement() {
+      remoteVideo.muted = false; // We want sound, so we will manage play with user interaction
+      remoteVideo.playsInline = true;
+      remoteVideo.autoplay = false; // Autoplay is unreliable on mobile, so we disable it
+      remoteVideo.setAttribute('playsinline', 'true');
+      remoteVideo.setAttribute('webkit-playsinline', 'true');
+      remoteVideo.defaultMuted = false;
+
+      // Handle the "Tap to Play" logic
+      const playHandler = (e) => {
+        e.preventDefault();
+        logStatus('User interaction detected on video element.');
+        if (remoteVideo.paused || remoteVideo.ended || remoteVideo.srcObject) {
+          handleVideoPlay();
+        }
+      };
+      
+      playPrompt.addEventListener('click', playHandler);
+      playPrompt.addEventListener('touchstart', playHandler);
+      videoContainer.addEventListener('click', playHandler);
+      videoContainer.addEventListener('touchstart', playHandler);
+
+      remoteVideo.addEventListener('playing', () => {
+        logStatus('Video: Playing started');
+        updateStatus('connected', 'Live Stream');
       });
-      await hostPC.setLocalDescription(offer);
 
-      await set(ref(db, `signaling/${sessionCode}/offer`), {
-        sdp: offer.sdp,
-        type: offer.type
+      remoteVideo.addEventListener('pause', () => {
+        logStatus('Video: Paused');
+        if (remoteVideo.srcObject) {
+          updateStatus('connecting', 'Paused');
+        }
       });
-
-      console.log('Offer created and sent to Firebase.');
-    } catch (error) {
-      console.error('Error during negotiation:', error);
-    }
-  };
-
-  hostPC.onconnectionstatechange = () => {
-    console.log(`Host connection state: ${hostPC.connectionState}`);
-  };
-
-  try {
-    localStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: false
-    });
-
-    if (preview) {
-      preview.srcObject = localStream;
-      preview.muted = true;
-      preview.play().catch(e => console.error('Preview play failed:', e));
+      
+      remoteVideo.addEventListener('error', (e) => {
+        const error = e.target.error;
+        logStatus('Video error: ' + (error ? `${error.code} - ${error.message}` : 'Unknown error'));
+        showError('Video playback error. Tap the video to retry.');
+        if (remoteVideo.srcObject) {
+          playPrompt.classList.add('visible');
+        }
+      });
     }
 
-    localStream.getTracks().forEach(track => {
-      hostPC.addTrack(track, localStream);
-    });
+    async function connectToSession(code) {
+      showLoading(true);
+      updateStatus('connecting', 'Finding your session...');
+      try {
+        currentPC = new RTCPeerConnection(pcConfig);
+        currentSessionCode = code;
+        iceReconnectAttempts = 0;
 
-    onValue(ref(db, `signaling/${sessionCode}/answer`), async (snap) => {
-      const answer = snap.val();
-      if (answer) {
-        await hostPC.setRemoteDescription(new RTCSessionDescription(answer));
-        console.log('Answer received and set.');
+        currentPC.oniceconnectionstatechange = () => {
+          const state = currentPC.iceConnectionState;
+          logStatus(`ICE connection state: ${state}`);
+          switch (state) {
+            case 'checking':
+              updateStatus('connecting', 'Checking connectivity...');
+              break;
+            case 'connected':
+            case 'completed':
+              updateStatus('connected', 'Connected');
+              break;
+            case 'disconnected':
+              updateStatus('connecting', 'Reconnecting...');
+              if (iceReconnectAttempts < maxIceReconnects) {
+                logStatus('Attempting ICE restart...');
+                currentPC.restartIce();
+                iceReconnectAttempts++;
+              }
+              break;
+            case 'failed':
+              updateStatus('error', 'Connection failed');
+              showError('Connection failed. Please check network or reload.');
+              break;
+          }
+        };
+
+        currentPC.onicecandidate = async (event) => {
+          if (event.candidate) {
+            logStatus('New ICE candidate generated.');
+            await push(ref(db, `signaling/${code}/viewerCandidates`), event.candidate.toJSON());
+          }
+        };
+
+        currentPC.ontrack = (event) => {
+          logStatus('Received stream track.');
+          const stream = event.streams[0];
+          if (stream && stream.getVideoTracks().length > 0) {
+            showVideoContainer();
+            remoteVideo.srcObject = stream;
+            updateStatus('connecting', 'Stream Ready');
+            handleVideoPlay(); // Attempt to play the video with our robust handler
+          } else {
+            logStatus('No video track found in stream.');
+            updateStatus('error', 'Stream Error');
+            showError('Failed to receive video stream. Please check agent status.');
+          }
+          showLoading(false);
+        };
+        
+        // Fetch offer and set remote description
+        const offerSnap = await get(ref(db, `signaling/${code}/offer`));
+        const offerVal = offerSnap.val();
+        if (!offerVal) {
+          throw new Error('No active session with this code.');
+        }
+        await currentPC.setRemoteDescription(new RTCSessionDescription(offerVal));
+
+        // Create and send answer
+        const answer = await currentPC.createAnswer({
+          offerToReceiveVideo: true,
+          offerToReceiveAudio: true // Requesting audio too
+        });
+        await currentPC.setLocalDescription(answer);
+        await set(ref(db, `signaling/${code}/answer`), {
+          sdp: answer.sdp,
+          type: answer.type
+        });
+        
+        // Listen for ICE candidates from the host
+        onChildAdded(ref(db, `signaling/${code}/hostCandidates`), async (snap) => {
+          if (currentPC && snap.val()) {
+            try {
+              await currentPC.addIceCandidate(new RTCIceCandidate(snap.val()));
+              logStatus('Host ICE candidate added.');
+            } catch (e) {
+              logStatus(`Error adding host ICE candidate: ${e.message}`);
+            }
+          }
+        });
+
+      } catch (error) {
+        logStatus(`Connection error: ${error.message}`);
+        let errorMsg = error.message;
+        if (error.message.includes('Session not found')) {
+          errorMsg = 'No active session. Please check the code or ensure the agent is running.';
+        }
+        showError(errorMsg);
+        updateStatus('error', 'Failed');
+        showLoading(false);
       }
-    }, { onlyOnce: true });
+    }
 
-    onChildAdded(ref(db, `signaling/${sessionCode}/viewerCandidates`), async (snap) => {
-      const val = snap.val();
-      if (val) {
-        await hostPC.addIceCandidate(new RTCIceCandidate(val));
+    function disconnect() {
+      if (currentPC) {
+        currentPC.close();
+        currentPC = null;
+      }
+      if (currentSessionCode) {
+        off(ref(db, `signaling/${currentSessionCode}/hostCandidates`));
+        currentSessionCode = null;
+      }
+      remoteVideo.srcObject = null;
+      hideVideoContainer();
+      showLoading(false);
+      sessionInput.value = '';
+      updateStatus('connecting', 'Disconnected');
+    }
+
+    function toggleIceDebug() {
+      iceDebug = !iceDebug;
+      iceStatus.style.display = iceDebug ? 'block' : 'none';
+      toggleIceBtn.innerHTML = iceDebug ? '<i class="fas fa-eye-slash"></i> Hide Debug' : '<i class="fas fa-code"></i> Show Debug';
+      if (iceDebug) {
+        iceStatus.innerHTML = '=== Debug Log Started ===<br>';
+      }
+    }
+
+    function toggleFullscreen() {
+      const element = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!element) {
+        if (videoContainer.requestFullscreen) {
+          videoContainer.requestFullscreen();
+        } else if (videoContainer.webkitRequestFullscreen) {
+          videoContainer.webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    }
+
+    sessionInput.addEventListener('input', function() {
+      this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    sessionInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        connectToSession(sessionInput.value.trim().toUpperCase());
       }
     });
 
-    console.log('Screen sharing started. Code:', sessionCode);
-    return sessionCode;
-  } catch (error) {
-    console.error('Error starting screen share:', error);
-    if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-      alert("Permission to share your screen was denied. Please allow it and try again.");
+    joinBtn.onclick = () => connectToSession(sessionInput.value.trim().toUpperCase());
+    disconnectBtn.onclick = disconnect;
+    toggleIceBtn.onclick = toggleIceDebug;
+    fullscreenBtn.onclick = toggleFullscreen;
+
+    setupVideoElement();
+
+    window.addEventListener('beforeunload', disconnect);
+
+    logStatus(`Viewer initialized (Mobile: ${isMobile}, iOS: ${isIOS}, Safari: ${isSafari}, User Agent: ${navigator.userAgent.substring(0, 50)}...)`);
+
+    if (isMobile) {
+      deviceInfo.innerHTML = `
+        **Mobile Device Detected**<br>
+        ${isIOS ? 'iOS: Best experience on Safari.' : 'Android: Best experience on Chrome.'}
+      `;
     }
-    return null;
-  }
-}
+  </script>
 
-export function stopScreenShare() {
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-  }
-  if (hostPC) {
-    hostPC.close();
-  }
-  localStream = null;
-  hostPC = null;
-  console.log('Screen sharing stopped.');
-}
-
-// ----- VIEWER -----
-export async function joinSession(sessionCode) {
-  if (!sessionCode) return alert('Session code is required.');
-
-  viewerPC = new RTCPeerConnection(pcConfig);
-
-  viewerPC.ontrack = (evt) => {
-    const remoteVideo = document.getElementById('remoteVideo');
-    const stream = evt.streams[0];
-    if (remoteVideo && stream && stream.getVideoTracks().length > 0) {
-      console.log('Viewer received stream track.');
-      remoteVideo.srcObject = stream;
-      remoteVideo.play().catch(e => console.error('Auto-play failed:', e));
-    } else {
-      console.warn('Viewer ontrack event without a valid video stream.');
-    }
-  };
-
-  viewerPC.onicecandidate = (evt) => {
-    if (evt.candidate) {
-      const viewerCandidatesRef = ref(db, `signaling/${sessionCode}/viewerCandidates`);
-      push(viewerCandidatesRef, evt.candidate.toJSON());
-    }
-  };
-
-  try {
-    const offerSnap = await get(ref(db, `signaling/${sessionCode}/offer`));
-    const offerVal = offerSnap.val();
-    if (!offerVal) return alert('No active session with that code.');
-
-    await viewerPC.setRemoteDescription(new RTCSessionDescription(offerVal));
-
-    const answer = await viewerPC.createAnswer();
-    await viewerPC.setLocalDescription(answer);
-    await set(ref(db, `signaling/${sessionCode}/answer`), {
-      sdp: answer.sdp,
-      type: answer.type
-    });
-
-    onChildAdded(ref(db, `signaling/${sessionCode}/hostCandidates`), async (snap) => {
-      const val = snap.val();
-      if (val) {
-        await viewerPC.addIceCandidate(new RTCIceCandidate(val));
-      }
-    });
-
-    console.log('Joined session:', sessionCode);
-  } catch (error) {
-    console.error('Error joining session:', error);
-    alert('Failed to join session. Check the code and try again.');
-  }
-}
-
-export function disconnect() {
-  if (viewerPC) {
-    viewerPC.close();
-    viewerPC = null;
-  }
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-  }
-  localStream = null;
-}
+  <script type="text/javascript">
+  var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+  (function(){
+  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+  s1.async=true;
+  s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
+  s1.charset='UTF-8';
+  s1.setAttribute('crossorigin','*');
+  s0.parentNode.insertBefore(s1,s0);
+  })();
+  </script>
+  </body>
+</html>
