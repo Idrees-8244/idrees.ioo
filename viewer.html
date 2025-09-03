@@ -1,295 +1,206 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-touch-fullscreen" content="yes">
-  <title>Universal Screen Viewer</title>
+  <title>Screen Viewer</title>
   <style>
-    * { 
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
-    }
-    
+    * { margin:0; padding:0; box-sizing:border-box; }
     body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-      min-height: 100vh; 
-      padding: 10px; 
-      color: #333; 
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; 
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); 
+      min-height:100vh; 
+      padding:20px; 
+      color:#333; 
       touch-action: manipulation;
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
-      overflow-x: hidden;
     }
-    
     .container { 
-      max-width: 900px; 
-      margin: 0 auto; 
-      background: rgba(255, 255, 255, 0.95); 
-      backdrop-filter: blur(10px); 
-      border-radius: 20px; 
-      padding: 20px; 
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); 
+      max-width:800px; 
+      margin:0 auto; 
+      background:rgba(255,255,255,0.95); 
+      backdrop-filter:blur(10px); 
+      border-radius:20px; 
+      padding:30px; 
+      box-shadow:0 20px 40px rgba(0,0,0,0.1); 
     }
-    
-    h1 { 
-      text-align: center; 
-      color: #333; 
-      font-size: 1.8rem; 
-      margin-bottom: 5px; 
-      background: linear-gradient(135deg, #667eea, #764ba2); 
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent; 
-      background-clip: text; 
+    h2 { 
+      text-align:center; 
+      color:#333; 
+      font-size:2rem; 
+      margin-bottom:10px; 
+      background:linear-gradient(135deg,#667eea,#764ba2); 
+      -webkit-background-clip:text; 
+      -webkit-text-fill-color:transparent; 
+      background-clip:text; 
     }
-    
     .subtitle { 
-      text-align: center; 
-      color: #666; 
-      margin-bottom: 20px; 
-      font-size: 1rem; 
+      text-align:center; 
+      color:#666; 
+      margin-bottom:30px; 
+      font-size:1.1rem; 
     }
-    
-    .browser-warning {
-      background: #fff3cd;
-      border: 1px solid #ffeaa7;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
-      display: none;
+    .input-container { 
+      display:flex; 
+      flex-direction:column; 
+      gap:15px; 
+      margin-bottom:30px; 
+      align-items:center; 
     }
-    
-    .browser-warning.show {
-      display: block;
-    }
-    
-    .browser-warning h3 {
-      color: #856404;
-      margin-bottom: 10px;
-    }
-    
-    .browser-warning p {
-      color: #856404;
-      line-height: 1.4;
-    }
-    
-    .input-section { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 15px; 
-      margin-bottom: 20px; 
-      align-items: center; 
-    }
-    
     #sessionInput { 
-      width: 100%; 
-      max-width: 280px; 
-      padding: 15px 20px; 
-      font-size: 1.1rem; 
-      font-weight: bold; 
-      text-align: center; 
-      letter-spacing: 1px; 
-      border: 2px solid #e1e5e9; 
-      border-radius: 12px; 
-      background: white; 
-      transition: all 0.3s ease; 
-      text-transform: uppercase; 
-      outline: none;
+      width:100%; 
+      max-width:300px; 
+      padding:15px 20px; 
+      font-size:1.2rem; 
+      font-weight:bold; 
+      text-align:center; 
+      letter-spacing:2px; 
+      border:3px solid #e1e5e9; 
+      border-radius:12px; 
+      background:white; 
+      transition:all 0.3s ease; 
+      text-transform:uppercase; 
+      outline:none;
       -webkit-user-select: text;
       user-select: text;
     }
-    
     #sessionInput:focus { 
-      border-color: #667eea; 
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2); 
+      border-color:#667eea; 
+      box-shadow:0 0 0 4px rgba(102,126,234,0.2); 
     }
-    
-    .connect-btn { 
-      width: 100%; 
-      max-width: 280px; 
-      padding: 15px 25px; 
-      background: linear-gradient(135deg, #28a745, #20c997); 
-      color: white; 
-      border: none; 
-      border-radius: 12px; 
-      font-size: 1rem; 
-      font-weight: 600; 
-      cursor: pointer; 
-      transition: all 0.3s ease; 
-      box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3); 
-      -webkit-tap-highlight-color: transparent; 
+    #joinBtn { 
+      width:100%; 
+      max-width:300px; 
+      padding:15px 25px; 
+      background:linear-gradient(135deg,#28a745,#20c997); 
+      color:white; 
+      border:none; 
+      border-radius:12px; 
+      font-size:1.1rem; 
+      font-weight:600; 
+      cursor:pointer; 
+      transition:all 0.3s ease; 
+      box-shadow:0 8px 20px rgba(40,167,69,0.3); 
+      -webkit-tap-highlight-color:transparent; 
       touch-action: manipulation;
     }
-    
-    .connect-btn:hover:not(:disabled) { 
-      transform: translateY(-2px); 
-      box-shadow: 0 12px 25px rgba(40, 167, 69, 0.4); 
+    #joinBtn:hover:not(:disabled) { 
+      transform:translateY(-2px); 
+      box-shadow:0 12px 25px rgba(40,167,69,0.4); 
     }
-    
-    .connect-btn:disabled { 
-      background: #6c757d; 
-      cursor: not-allowed; 
-      transform: none; 
-      box-shadow: none; 
+    #joinBtn:disabled { 
+      background:#6c757d; 
+      cursor:not-allowed; 
+      transform:none; 
+      box-shadow:none; 
     }
-    
-    .status-section {
-      background: #f8f9fa;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
-      text-align: center;
-      display: none;
+    .video-container { 
+      margin-top:20px; 
+      border-radius:15px; 
+      overflow:hidden; 
+      background:#000; 
+      position:relative; 
+      box-shadow:0 10px 30px rgba(0,0,0,0.3); 
+      display:none; 
     }
-    
-    .status-section.show {
-      display: block;
+    .video-container.active { 
+      display:block; 
     }
-    
-    .status-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 500;
-    }
-    
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #28a745;
-      animation: pulse 2s infinite;
-    }
-    
-    .status-dot.connecting { background: #ffc107; }
-    .status-dot.error { background: #dc3545; animation: none; }
-    
-    @keyframes pulse { 
-      0%, 100% { opacity: 1; } 
-      50% { opacity: 0.5; } 
-    }
-    
-    .video-section { 
-      margin-top: 20px; 
-      border-radius: 15px; 
-      overflow: hidden; 
-      background: #000; 
-      position: relative; 
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
-      display: none; 
-    }
-    
-    .video-section.active { 
-      display: block; 
-    }
-    
     #remoteVideo { 
-      width: 100%; 
-      height: auto; 
-      min-height: 200px; 
-      max-height: 70vh; 
-      object-fit: contain; 
-      background: #000; 
-      display: block;
+      width:100%; 
+      height:auto; 
+      min-height:200px; 
+      max-height:70vh; 
+      object-fit:contain; 
+      background:#000; 
+      display:block;
     }
-    
-    .video-overlay {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      z-index: 10;
+    .status-bar { 
+      position:absolute; 
+      top:15px; 
+      left:15px; 
+      background:rgba(0,0,0,0.8); 
+      color:white; 
+      padding:8px 12px; 
+      border-radius:20px; 
+      font-size:0.9rem; 
+      font-weight:500; 
+      display:flex; 
+      align-items:center; 
+      gap:8px; 
+      z-index:10; 
     }
-    
+    .status-dot { 
+      width:8px; 
+      height:8px; 
+      border-radius:50%; 
+      background:#28a745; 
+      animation:pulse 2s infinite; 
+    }
+    .status-dot.connecting { background:#ffc107; }
+    .status-dot.error { background:#dc3545; }
+    @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.5;} }
     .controls { 
-      display: flex; 
-      justify-content: center; 
-      gap: 10px; 
-      margin-top: 15px; 
-      flex-wrap: wrap; 
+      display:flex; 
+      justify-content:center; 
+      gap:15px; 
+      margin-top:20px; 
+      flex-wrap:wrap; 
     }
-    
-    .control-btn { 
-      padding: 10px 15px; 
-      background: linear-gradient(135deg, #dc3545, #c82333); 
-      color: white; 
-      border: none; 
-      border-radius: 8px; 
-      font-weight: 600; 
-      cursor: pointer; 
-      transition: all 0.3s ease; 
-      -webkit-tap-highlight-color: transparent; 
+    .disconnect-btn { 
+      padding:10px 20px; 
+      background:linear-gradient(135deg,#dc3545,#c82333); 
+      color:white; 
+      border:none; 
+      border-radius:8px; 
+      font-weight:600; 
+      cursor:pointer; 
+      transition:all 0.3s ease; 
+      -webkit-tap-highlight-color:transparent; 
       touch-action: manipulation;
-      font-size: 0.9rem;
     }
-    
-    .control-btn.secondary {
-      background: linear-gradient(135deg, #6c757d, #5a6268);
-    }
-    
-    .control-btn.fullscreen {
-      background: linear-gradient(135deg, #007bff, #0056b3);
-    }
-    
     .error-message { 
-      background: #f8d7da; 
-      color: #721c24; 
-      padding: 15px; 
-      border-radius: 8px; 
-      margin: 15px 0; 
-      display: none; 
-      text-align: center; 
-      border-left: 4px solid #dc3545; 
+      background:#f8d7da; 
+      color:#721c24; 
+      padding:15px; 
+      border-radius:8px; 
+      margin:15px 0; 
+      display:none; 
+      text-align:center; 
+      border-left:4px solid #dc3545; 
     }
-    
-    .debug-section { 
-      background: #e9ecef; 
-      padding: 15px; 
-      border-radius: 8px; 
-      margin: 15px 0; 
-      font-family: monospace; 
-      font-size: 0.8rem; 
-      display: none; 
-      max-height: 200px; 
-      overflow-y: auto; 
-      white-space: pre-wrap;
+    .ice-status { 
+      background:#e9ecef; 
+      padding:10px; 
+      border-radius:8px; 
+      margin:10px 0; 
+      font-family:monospace; 
+      font-size:0.8rem; 
+      display:none; 
+      max-height:100px; 
+      overflow-y:auto; 
     }
-    
     .loading { 
-      text-align: center; 
-      padding: 20px; 
-      color: #666; 
-      display: none; 
+      text-align:center; 
+      padding:20px; 
+      color:#666; 
+      display:none; 
     }
-    
     .loading-spinner { 
-      border: 3px solid #f3f3f3; 
-      border-top: 3px solid #667eea; 
-      border-radius: 50%; 
-      width: 40px; 
-      height: 40px; 
-      animation: spin 1s linear infinite; 
-      margin: 0 auto 10px; 
+      border:3px solid #f3f3f3; 
+      border-top:3px solid #667eea; 
+      border-radius:50%; 
+      width:40px; 
+      height:40px; 
+      animation:spin 1s linear infinite; 
+      margin:0 auto 10px; 
     }
-    
-    @keyframes spin { 
-      0% { transform: rotate(0deg); } 
-      100% { transform: rotate(360deg); } 
-    }
+    @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
     
     .device-info {
       font-size: 0.8rem;
@@ -297,70 +208,54 @@
       text-align: center;
       margin-top: 10px;
       padding: 10px;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255,255,255,0.7);
       border-radius: 8px;
+      display: none;
     }
     
-    @media (max-width: 768px) { 
-      body { padding: 10px; } 
-      .container { padding: 15px; } 
-      h1 { font-size: 1.5rem; } 
-      #remoteVideo { max-height: 60vh; }
-      .controls { gap: 8px; }
-      .control-btn { padding: 8px 12px; font-size: 0.8rem; }
+    @media (max-width:768px) { 
+      body { padding:15px; } 
+      .container { padding:20px; } 
+      h2 { font-size:1.6rem; } 
+      #remoteVideo { max-height:60vh; }
+      .device-info { display: block; }
     }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1>📱 Universal Screen Viewer</h1>
-  <p class="subtitle">Works on All Devices & Browsers</p>
+  <h2>📱 Screen Viewer</h2>
+  <p class="subtitle">Mobile & Desktop Friendly</p>
   
-  <!-- Browser compatibility warning -->
-  <div class="browser-warning" id="browserWarning">
-    <h3>⚠️ Browser Compatibility Notice</h3>
-    <p id="browserMessage"></p>
-  </div>
-  
-  <div class="input-section">
-    <input type="text" id="sessionInput" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off" inputmode="text">
-    <button class="connect-btn" id="connectBtn">🔗 Connect to Stream</button>
+  <div class="input-container">
+    <input type="text" id="sessionInput" placeholder="ABCDEF" maxlength="6" autocomplete="off" inputmode="text">
+    <button id="joinBtn">🔗 Connect</button>
   </div>
 
-  <div class="device-info" id="deviceInfo"></div>
-  
-  <!-- Status section -->
-  <div class="status-section" id="statusSection">
-    <div class="status-indicator">
-      <div class="status-dot connecting" id="statusDot"></div>
-      <span id="statusText">Connecting...</span>
-    </div>
+  <div class="device-info" id="deviceInfo">
+    Optimized for mobile viewing • Audio automatically muted
   </div>
 
   <div class="error-message" id="errorMessage"></div>
-  <div class="debug-section" id="debugSection"></div>
+  <div class="ice-status" id="iceStatus"></div>
 
   <div class="loading" id="loading">
     <div class="loading-spinner"></div>
-    <p>Establishing secure connection...</p>
+    <p>Connecting via TURN servers...</p>
   </div>
 
-  <div class="video-section" id="videoSection">
-    <div class="video-overlay" id="videoOverlay">
-      <div class="status-dot" id="overlayStatusDot"></div>
-      <span id="overlayStatusText">Connected</span>
+  <div class="video-container" id="videoContainer">
+    <div class="status-bar" id="statusBar">
+      <div class="status-dot connecting" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
     </div>
-    <video id="remoteVideo" 
-           playsinline 
-           webkit-playsinline 
-           muted 
-           controls></video>
+    <video id="remoteVideo" playsinline muted webkit-playsinline controls></video>
   </div>
 
   <div class="controls" id="controls" style="display:none;">
-    <button class="control-btn" id="disconnectBtn">Disconnect</button>
-    <button class="control-btn secondary" id="debugBtn">Show Debug</button>
-    <button class="control-btn fullscreen" id="fullscreenBtn">Fullscreen</button>
+    <button class="disconnect-btn" id="disconnectBtn">Disconnect</button>
+    <button class="disconnect-btn" id="toggleIceBtn" style="background:#6c757d;">Show ICE</button>
+    <button class="disconnect-btn" id="fullscreenBtn" style="background:#007bff;">Fullscreen</button>
   </div>
 </div>
 
@@ -368,56 +263,40 @@
 import { db } from "./firebase-config.js";
 import { ref, get, set, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// DOM Elements
-const connectBtn = document.getElementById("connectBtn");
+const joinBtn = document.getElementById("joinBtn");
 const sessionInput = document.getElementById("sessionInput");
 const remoteVideo = document.getElementById("remoteVideo");
 const errorMessage = document.getElementById("errorMessage");
 const loading = document.getElementById("loading");
-const videoSection = document.getElementById("videoSection");
+const videoContainer = document.getElementById("videoContainer");
 const controls = document.getElementById("controls");
-const statusSection = document.getElementById("statusSection");
+const statusBar = document.getElementById("statusBar");
 const statusDot = document.getElementById("statusDot");
 const statusText = document.getElementById("statusText");
-const overlayStatusDot = document.getElementById("overlayStatusDot");
-const overlayStatusText = document.getElementById("overlayStatusText");
 const disconnectBtn = document.getElementById("disconnectBtn");
-const debugBtn = document.getElementById("debugBtn");
+const toggleIceBtn = document.getElementById("toggleIceBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
-const debugSection = document.getElementById("debugSection");
-const browserWarning = document.getElementById("browserWarning");
-const browserMessage = document.getElementById("browserMessage");
+const iceStatus = document.getElementById("iceStatus");
 const deviceInfo = document.getElementById("deviceInfo");
 
-// State management
 let currentPC = null;
 let currentSessionCode = null;
-let debugEnabled = false;
+let iceDebug = false;
 let reconnectAttempts = 0;
-let connectionTimeout = null;
 const maxReconnectAttempts = 3;
-const connectionTimeoutMs = 30000;
 
-// Browser and device detection
-const userAgent = navigator.userAgent;
-const isIOS = /iPad|iPhone|iPod/.test(userAgent);
-const isAndroid = /Android/.test(userAgent);
-const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-const isChrome = /Chrome/.test(userAgent);
-const isMobile = isIOS || isAndroid;
-const isSafariMobile = isIOS && isSafari;
-
-// Enhanced WebRTC configuration with multiple TURN servers
-const rtcConfiguration = {
+// Enhanced ICE configuration with more TURN servers for mobile reliability
+const pcConfig = {
   iceServers: [
-    // STUN servers
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.stunprotocol.org:3478' },
     { urls: 'stun:stun.cloudflare.com:3478' },
     
-    // TURN servers for mobile networks
+    // Multiple TURN servers for better mobile reliability
     { 
       urls: 'turn:openrelay.metered.ca:80', 
       username: 'openrelayproject', 
@@ -433,6 +312,13 @@ const rtcConfiguration = {
       username: 'openrelayproject', 
       credential: 'openrelayproject' 
     },
+    
+    // Additional free TURN servers for mobile networks
+    {
+      urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
+      username: 'webrtc',
+      credential: 'webrtc'
+    },
     {
       urls: 'turn:relay1.expressturn.com:3478',
       username: 'efTAJF7M2TAqVIBR3T',
@@ -445,352 +331,325 @@ const rtcConfiguration = {
   rtcpMuxPolicy: 'require'
 };
 
-// Logging function
-function log(message, type = 'info') {
-  const timestamp = new Date().toLocaleTimeString();
-  const logEntry = `[${timestamp}] ${message}`;
-  
-  console.log(logEntry);
-  
-  if (debugEnabled) {
-    debugSection.textContent += logEntry + '\n';
-    debugSection.scrollTop = debugSection.scrollHeight;
-  }
+// Mobile detection
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+function logIce(msg) { 
+  console.log(`[ICE] ${msg}`); 
+  if (iceDebug) { 
+    const time = new Date().toLocaleTimeString(); 
+    iceStatus.innerHTML += `[${time}] ${msg}<br>`; 
+    iceStatus.scrollTop = iceStatus.scrollHeight; 
+  } 
 }
 
-// Browser compatibility check
-function checkBrowserCompatibility() {
-  let warningMessage = '';
-  let showWarning = false;
-  
-  if (!window.RTCPeerConnection) {
-    warningMessage = 'WebRTC is not supported in this browser. Please use Chrome, Firefox, Safari, or Edge.';
-    showWarning = true;
-  } else if (isIOS && !isSafari) {
-    warningMessage = 'For best experience on iPhone/iPad, please use Safari browser instead of Chrome or other browsers.';
-    showWarning = true;
-  } else if (isAndroid && !isChrome) {
-    warningMessage = 'For best experience on Android, please use Chrome browser.';
-    showWarning = true;
-  }
-  
-  if (showWarning) {
-    browserMessage.textContent = warningMessage;
-    browserWarning.classList.add('show');
-  }
-  
-  // Display device info
-  let deviceType = 'Desktop';
-  if (isIOS) deviceType = 'iOS (iPhone/iPad)';
-  else if (isAndroid) deviceType = 'Android';
-  
-  let browserType = 'Unknown';
-  if (isSafari) browserType = 'Safari';
-  else if (isChrome) browserType = 'Chrome';
-  else if (userAgent.includes('Firefox')) browserType = 'Firefox';
-  else if (userAgent.includes('Edge')) browserType = 'Edge';
-  
-  deviceInfo.innerHTML = `
-    Device: ${deviceType}<br>
-    Browser: ${browserType}<br>
-    WebRTC: ${window.RTCPeerConnection ? '✓ Supported' : '✗ Not Supported'}
-  `;
+function showError(msg) {
+  errorMessage.textContent = msg; 
+  errorMessage.style.display = 'block'; 
+  setTimeout(() => { 
+    errorMessage.style.display = 'none'; 
+  }, 10000);
 }
 
-// Enhanced error handling
-function showError(message, duration = 10000) {
-  log(`ERROR: ${message}`, 'error');
-  errorMessage.textContent = message;
-  errorMessage.style.display = 'block';
-  setTimeout(() => {
-    errorMessage.style.display = 'none';
-  }, duration);
+function showLoading(show) { 
+  loading.style.display = show ? 'block' : 'none'; 
+  joinBtn.disabled = show; 
+  joinBtn.textContent = show ? 'Connecting...' : '🔗 Connect'; 
 }
 
-// Loading state management
-function setLoading(isLoading, message = 'Connecting...') {
-  loading.style.display = isLoading ? 'block' : 'none';
-  connectBtn.disabled = isLoading;
-  connectBtn.textContent = isLoading ? 'Connecting...' : '🔗 Connect to Stream';
-  
-  if (isLoading) {
-    loading.querySelector('p').textContent = message;
-  }
+function updateStatus(status, text) { 
+  statusDot.className = 'status-dot ' + status; 
+  statusText.textContent = text; 
+  logIce(`Status: ${text}`); 
 }
 
-// Status management
-function updateStatus(status, text) {
-  const dots = [statusDot, overlayStatusDot];
-  dots.forEach(dot => {
-    dot.className = `status-dot ${status}`;
-  });
-  
-  statusText.textContent = text;
-  overlayStatusText.textContent = text;
-  
-  if (status !== 'connecting') {
-    statusSection.classList.add('show');
-  }
-  
-  log(`Status: ${text}`);
+function showVideoContainer() { 
+  videoContainer.classList.add('active'); 
+  controls.style.display = 'flex'; 
 }
 
-// Video element setup with enhanced mobile support
-function setupVideo() {
-  // Set video properties
+function hideVideoContainer() { 
+  videoContainer.classList.remove('active'); 
+  controls.style.display = 'none'; 
+}
+
+// Enhanced video handling for mobile
+function setupVideoElement() {
+  // Set all required properties for mobile compatibility
   remoteVideo.muted = true;
-  remoteVideo.defaultMuted = true;
-  remoteVideo.volume = 0;
   remoteVideo.playsInline = true;
+  remoteVideo.autoplay = false; // Disable autoplay, use manual play
   remoteVideo.setAttribute('playsinline', 'true');
   remoteVideo.setAttribute('webkit-playsinline', 'true');
+  remoteVideo.setAttribute('muted', 'true');
+  remoteVideo.defaultMuted = true;
+  remoteVideo.volume = 0;
+  
+  // Always show controls on mobile for easier debugging
+  if (isMobile) {
+    remoteVideo.controls = true;
+    logIce('Mobile: Video controls enabled for debugging');
+  }
   
   // Video event handlers
-  remoteVideo.addEventListener('loadstart', () => log('Video: Load started'));
-  remoteVideo.addEventListener('loadeddata', () => log('Video: Data loaded'));
-  remoteVideo.addEventListener('loadedmetadata', () => {
-    log(`Video: Metadata loaded (${remoteVideo.videoWidth}x${remoteVideo.videoHeight})`);
-    playVideo('metadata loaded');
-  });
-  remoteVideo.addEventListener('canplay', () => {
-    log('Video: Can play');
-    playVideo('canplay event');
-  });
-  remoteVideo.addEventListener('playing', () => {
-    log('Video: Playing');
-    updateStatus('connected', 'Video Playing');
-  });
-  remoteVideo.addEventListener('pause', () => log('Video: Paused'));
-  remoteVideo.addEventListener('waiting', () => log('Video: Waiting'));
-  remoteVideo.addEventListener('stalled', () => log('Video: Stalled'));
-  remoteVideo.addEventListener('error', (e) => {
-    const error = e.target.error;
-    log(`Video error: ${error ? error.message : 'Unknown error'}`);
-    showError('Video playback error. Please tap to retry or reconnect.');
+  remoteVideo.addEventListener('loadstart', () => {
+    logIce('Video: Load started');
   });
   
-  // User interaction handler for mobile
-  remoteVideo.addEventListener('click', () => playVideo('user click'));
-  remoteVideo.addEventListener('touchstart', () => playVideo('user touch'));
+  remoteVideo.addEventListener('loadeddata', () => {
+    logIce('Video: Data loaded');
+  });
+  
+  remoteVideo.addEventListener('loadedmetadata', () => {
+    logIce(`Video: Metadata loaded - ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
+    
+    // Manual play attempt
+    setTimeout(() => {
+      attemptVideoPlay('metadata loaded');
+    }, 200);
+  });
+  
+  remoteVideo.addEventListener('canplay', () => { 
+    logIce('Video: Can play'); 
+    attemptVideoPlay('canplay event');
+  });
+  
+  remoteVideo.addEventListener('playing', () => {
+    logIce('Video: Playing started');
+    updateStatus('connected', 'Video playing');
+  });
+  
+  remoteVideo.addEventListener('pause', () => {
+    logIce('Video: Paused');
+  });
+  
+  remoteVideo.addEventListener('waiting', () => {
+    logIce('Video: Waiting for data');
+  });
+  
+  remoteVideo.addEventListener('error', (e) => {
+    const error = e.target.error;
+    logIce('Video error: ' + (error ? `${error.code} - ${error.message}` : 'Unknown error'));
+    showError('Video playback error. Tap to retry or reconnect.');
+  });
+  
+  remoteVideo.addEventListener('stalled', () => {
+    logIce('Video: Stalled, attempting to recover');
+  });
+  
+  // Click handler for manual play
+  remoteVideo.addEventListener('click', () => {
+    attemptVideoPlay('user click');
+  });
 }
 
-// Enhanced video play function
-function playVideo(reason) {
+function attemptVideoPlay(reason) {
   if (!remoteVideo.srcObject) {
-    log(`Play skipped - no source (${reason})`);
+    logIce(`Play attempt skipped - no source (${reason})`);
     return;
   }
   
-  log(`Attempting video play: ${reason}`);
+  logIce(`Attempting video play: ${reason}`);
   
   const playPromise = remoteVideo.play();
   
   if (playPromise !== undefined) {
     playPromise.then(() => {
-      log(`Video play success: ${reason}`);
-      // Remove controls after successful play on desktop
-      if (!isMobile) {
-        setTimeout(() => {
-          remoteVideo.controls = false;
-        }, 2000);
+      logIce(`Video play successful: ${reason}`);
+      // Hide controls after successful play (except on iOS for debugging)
+      if (!navigator.userAgent.includes('iPhone') && !navigator.userAgent.includes('iPad')) {
+        remoteVideo.controls = false;
       }
-    }).catch(error => {
-      log(`Video play failed (${reason}): ${error.message}`);
+    }).catch(e => {
+      logIce(`Video play failed (${reason}): ${e.message}`);
       
-      if (error.name === 'NotAllowedError') {
-        showError('Please tap the video to start playback');
+      if (e.name === 'NotAllowedError') {
+        showError('Tap the video to start playback (browser security requirement)');
+      } else if (e.name === 'AbortError') {
+        logIce('Play aborted, likely due to new play request');
+      } else {
+        showError('Video playback issue. Please tap the video or reconnect.');
       }
     });
   }
 }
 
-// WebRTC connection establishment
-async function connectToSession() {
-  const sessionCode = sessionInput.value.trim().toUpperCase();
-  
-  if (!sessionCode || sessionCode.length !== 6) {
-    showError("Please enter a valid 6-digit session code");
+function forceVideoPlay() {
+  attemptVideoPlay('force play');
+}
+
+async function joinSession() {
+  const code = sessionInput.value.trim().toUpperCase();
+  if (!code || code.length !== 6) { 
+    showError("Please enter a valid 6-digit session code"); 
     return;
   }
   
-  if (!window.RTCPeerConnection) {
-    showError("WebRTC is not supported in this browser");
-    return;
-  }
-  
-  log(`Starting connection to session: ${sessionCode}`);
-  log(`Device: ${isMobile ? 'Mobile' : 'Desktop'}, Browser: ${userAgent.substring(0, 50)}...`);
-  
-  setLoading(true, 'Connecting to session...');
-  updateStatus('connecting', 'Connecting...');
-  currentSessionCode = sessionCode;
-  reconnectAttempts = 0;
+  showLoading(true); 
+  errorMessage.style.display = 'none'; 
+  logIce(`Starting connection to session: ${code} (Mobile: ${isMobile})`);
   
   try {
-    // Create peer connection
-    currentPC = new RTCPeerConnection(rtcConfiguration);
-    
-    // Set up event handlers
-    setupPeerConnectionEvents();
-    
+    currentPC = new RTCPeerConnection(pcConfig); 
+    currentSessionCode = code;
+    reconnectAttempts = 0;
+
+    // Enhanced connection state handling
+    currentPC.oniceconnectionstatechange = () => {
+      const state = currentPC.iceConnectionState;
+      logIce(`ICE connection state: ${state}`);
+      
+      switch (state) {
+        case 'checking':
+          updateStatus('connecting', 'Checking connectivity...');
+          break;
+        case 'connected':
+        case 'completed':
+          updateStatus('connected', 'Connected via ICE');
+          showLoading(false);
+          reconnectAttempts = 0;
+          break;
+        case 'disconnected':
+          updateStatus('connecting', 'Reconnecting...');
+          if (reconnectAttempts < maxReconnectAttempts) {
+            setTimeout(() => {
+              if (currentPC && currentPC.iceConnectionState === 'disconnected') {
+                logIce('Attempting ICE restart...');
+                currentPC.restartIce();
+                reconnectAttempts++;
+              }
+            }, 2000);
+          }
+          break;
+        case 'failed':
+          updateStatus('error', 'Connection failed');
+          if (reconnectAttempts < maxReconnectAttempts) {
+            showError(`Connection failed. Retrying... (${reconnectAttempts + 1}/${maxReconnectAttempts})`);
+            setTimeout(() => attemptReconnect(), 3000);
+          } else {
+            showError('Connection failed after multiple attempts. Please check your network and try again.');
+            showLoading(false);
+          }
+          break;
+        case 'closed':
+          updateStatus('connecting', 'Connection closed');
+          break;
+      }
+    };
+
+    currentPC.onicegatheringstatechange = () => { 
+      logIce(`ICE gathering state: ${currentPC.iceGatheringState}`); 
+    };
+
+    currentPC.onicecandidate = async (event) => { 
+      if (event.candidate) { 
+        logIce(`New ICE candidate: ${event.candidate.type} (${event.candidate.protocol})`); 
+      } else { 
+        logIce('ICE candidate gathering finished'); 
+      } 
+    };
+
+    currentPC.onconnectionstatechange = () => { 
+      const state = currentPC.connectionState; 
+      logIce(`Peer connection state: ${state}`); 
+    };
+
+    // Enhanced track handling for mobile
+    currentPC.ontrack = (event) => {
+      logIce('=== TRACK EVENT RECEIVED ===');
+      logIce(`Event streams: ${event.streams.length}`);
+      logIce(`Event track: ${event.track.kind} - ${event.track.readyState}`);
+      
+      const stream = event.streams[0];
+      
+      if (stream) {
+        const videoTracks = stream.getVideoTracks();
+        const audioTracks = stream.getAudioTracks();
+        
+        logIce(`Stream ID: ${stream.id}`);
+        logIce(`Video tracks: ${videoTracks.length}`);
+        logIce(`Audio tracks: ${audioTracks.length}`);
+        
+        if (videoTracks.length > 0) {
+          const videoTrack = videoTracks[0];
+          logIce(`Video track: ${videoTrack.label} - ${videoTrack.readyState} - Enabled: ${videoTrack.enabled}`);
+        }
+        
+        // Always set the stream
+        remoteVideo.srcObject = stream;
+        showVideoContainer();
+        updateStatus('connected', 'Stream received');
+        
+        // Log video element state
+        setTimeout(() => {
+          logIce(`Video element: ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`);
+          logIce(`Video paused: ${remoteVideo.paused}`);
+          logIce(`Video muted: ${remoteVideo.muted}`);
+          logIce(`Video readyState: ${remoteVideo.readyState}`);
+          
+          // Force a play attempt
+          attemptVideoPlay('track received');
+        }, 500);
+        
+        showLoading(false);
+      } else {
+        logIce('ERROR: No stream received in track event');
+        showError('Failed to receive video stream');
+      }
+    };
+
     // Check if session exists
-    const offerSnapshot = await get(ref(db, `sessions/${sessionCode}/offer`));
-    if (!offerSnapshot.exists()) {
-      throw new Error("Session not found. Please check the code.");
+    const offerSnap = await get(ref(db, "sessions/" + code + "/offer"));
+    if (!offerSnap.exists()) { 
+      throw new Error("Session not found. Please check the code and try again."); 
     }
-    
-    const offer = offerSnapshot.val();
-    log(`Received offer: ${offer.type}`);
-    
-    // Set remote description
+
+    const offer = offerSnap.val();
     await currentPC.setRemoteDescription(new RTCSessionDescription(offer));
-    log('Remote description set');
-    
-    // Create and set local description
-    const answer = await currentPC.createAnswer({
+
+    // Create answer with mobile-specific constraints
+    const answerConstraints = {
       offerToReceiveVideo: true,
       offerToReceiveAudio: false
-    });
-    
+    };
+
+    const answer = await currentPC.createAnswer(answerConstraints);
     await currentPC.setLocalDescription(answer);
-    log('Local description set');
-    
-    // Send answer to Firebase
-    await set(ref(db, `sessions/${sessionCode}/answer`), answer);
-    log('Answer sent to Firebase');
-    
+    await set(ref(db, "sessions/" + code + "/answer"), answer);
+
     // Listen for ICE candidates
-    onChildAdded(ref(db, `sessions/${sessionCode}/candidates`), async (snapshot) => {
-      if (currentPC && snapshot.val()) {
-        try {
-          await currentPC.addIceCandidate(new RTCIceCandidate(snapshot.val()));
-          log('ICE candidate added');
-        } catch (error) {
-          log(`ICE candidate error: ${error.message}`);
-        }
+    onChildAdded(ref(db, "sessions/" + code + "/candidates"), async (snap) => {
+      if (currentPC && snap.val()) { 
+        try { 
+          await currentPC.addIceCandidate(new RTCIceCandidate(snap.val())); 
+          logIce('ICE candidate added successfully');
+        } catch (e) { 
+          logIce(`Error adding ICE candidate: ${e.message}`); 
+        } 
       }
     });
-    
-    // Set connection timeout
-    connectionTimeout = setTimeout(() => {
+
+    // Connection timeout
+    setTimeout(() => {
       if (currentPC && currentPC.iceConnectionState !== 'connected' && currentPC.iceConnectionState !== 'completed') {
-        log('Connection timeout');
+        logIce('Connection timeout reached');
         showError('Connection timeout. Please try again.');
-        disconnect();
+        showLoading(false);
       }
-    }, connectionTimeoutMs);
-    
-  } catch (error) {
-    log(`Connection error: ${error.message}`);
-    showError(error.message);
-    setLoading(false);
-    updateStatus('error', 'Connection failed');
+    }, 30000);
+
+  } catch (error) { 
+    logIce(`Connection error: ${error.message}`); 
+    showError(error.message || 'Connection failed. Please try again.'); 
+    showLoading(false);
   }
 }
 
-// Peer connection event handlers
-function setupPeerConnectionEvents() {
-  // ICE connection state changes
-  currentPC.oniceconnectionstatechange = () => {
-    const state = currentPC.iceConnectionState;
-    log(`ICE connection state: ${state}`);
-    
-    switch (state) {
-      case 'checking':
-        updateStatus('connecting', 'Checking connectivity...');
-        break;
-      case 'connected':
-      case 'completed':
-        updateStatus('connected', 'Connected');
-        setLoading(false);
-        reconnectAttempts = 0;
-        if (connectionTimeout) {
-          clearTimeout(connectionTimeout);
-          connectionTimeout = null;
-        }
-        break;
-      case 'disconnected':
-        updateStatus('connecting', 'Reconnecting...');
-        if (reconnectAttempts < maxReconnectAttempts) {
-          setTimeout(() => attemptReconnect(), 2000);
-        }
-        break;
-      case 'failed':
-        updateStatus('error', 'Connection failed');
-        if (reconnectAttempts < maxReconnectAttempts) {
-          setTimeout(() => attemptReconnect(), 3000);
-        } else {
-          showError('Connection failed after multiple attempts');
-          setLoading(false);
-        }
-        break;
-      case 'closed':
-        updateStatus('connecting', 'Connection closed');
-        break;
-    }
-  };
-  
-  // ICE gathering state
-  currentPC.onicegatheringstatechange = () => {
-    log(`ICE gathering state: ${currentPC.iceGatheringState}`);
-  };
-  
-  // ICE candidates
-  currentPC.onicecandidate = (event) => {
-    if (event.candidate) {
-      log(`ICE candidate: ${event.candidate.type}`);
-    } else {
-      log('ICE gathering complete');
-    }
-  };
-  
-  // Connection state
-  currentPC.onconnectionstatechange = () => {
-    log(`Peer connection state: ${currentPC.connectionState}`);
-  };
-  
-  // Track received
-  currentPC.ontrack = (event) => {
-    log('=== TRACK RECEIVED ===');
-    const stream = event.streams[0];
-    
-    if (stream) {
-      const videoTracks = stream.getVideoTracks();
-      const audioTracks = stream.getAudioTracks();
-      
-      log(`Stream: ${stream.id}`);
-      log(`Video tracks: ${videoTracks.length}`);
-      log(`Audio tracks: ${audioTracks.length}`);
-      
-      if (videoTracks.length > 0) {
-        const track = videoTracks[0];
-        log(`Video track: ${track.label} (${track.readyState})`);
-      }
-      
-      // Set stream to video element
-      remoteVideo.srcObject = stream;
-      videoSection.classList.add('active');
-      controls.style.display = 'flex';
-      
-      // Try to play video
-      setTimeout(() => {
-        playVideo('track received');
-      }, 500);
-      
-      setLoading(false);
-    } else {
-      log('No stream in track event');
-      showError('No video stream received');
-    }
-  };
-}
-
-// Reconnection logic
 async function attemptReconnect() {
   if (reconnectAttempts >= maxReconnectAttempts) return;
   
   reconnectAttempts++;
-  log(`Reconnect attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
+  logIce(`Reconnect attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
   
   // Clean up current connection
   if (currentPC) {
@@ -798,59 +657,37 @@ async function attemptReconnect() {
     currentPC = null;
   }
   
-  if (connectionTimeout) {
-    clearTimeout(connectionTimeout);
-    connectionTimeout = null;
-  }
-  
-  // Wait and retry
+  // Wait a moment then retry
   await new Promise(resolve => setTimeout(resolve, 1000));
-  await connectToSession();
+  await joinSession();
 }
 
-// Disconnect function
-function disconnect() {
-  log('Disconnecting...');
-  
-  if (currentPC) {
-    currentPC.close();
-    currentPC = null;
-  }
-  
-  if (currentSessionCode) {
-    off(ref(db, `sessions/${currentSessionCode}/candidates`));
-    currentSessionCode = null;
-  }
-  
-  if (connectionTimeout) {
-    clearTimeout(connectionTimeout);
-    connectionTimeout = null;
-  }
-  
-  remoteVideo.srcObject = null;
-  videoSection.classList.remove('active');
-  controls.style.display = 'none';
-  statusSection.classList.remove('show');
-  setLoading(false);
-  sessionInput.value = '';
-  reconnectAttempts = 0;
-  
+function disconnect() { 
+  if (currentPC) { 
+    currentPC.close(); 
+    currentPC = null; 
+  } 
+  if (currentSessionCode) { 
+    off(ref(db, "sessions/" + currentSessionCode + "/candidates")); 
+    currentSessionCode = null; 
+  } 
+  remoteVideo.srcObject = null; 
+  hideVideoContainer(); 
+  showLoading(false); 
+  sessionInput.value = ''; 
   updateStatus('connecting', 'Disconnected');
+  reconnectAttempts = 0;
 }
 
-// Debug toggle
-function toggleDebug() {
-  debugEnabled = !debugEnabled;
-  debugSection.style.display = debugEnabled ? 'block' : 'none';
-  debugBtn.textContent = debugEnabled ? 'Hide Debug' : 'Show Debug';
-  
-  if (debugEnabled) {
-    debugSection.textContent = '=== Debug Log Started ===\n';
-    log('Debug mode enabled');
-  }
+function toggleIceDebug() { 
+  iceDebug = !iceDebug; 
+  iceStatus.style.display = iceDebug ? 'block' : 'none'; 
+  toggleIceBtn.textContent = iceDebug ? 'Hide ICE' : 'Show ICE'; 
+  if (iceDebug) { 
+    iceStatus.innerHTML = '=== ICE Debug Started ===<br>'; 
+  } 
 }
 
-// Fullscreen toggle
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     if (remoteVideo.requestFullscreen) {
@@ -871,79 +708,105 @@ function toggleFullscreen() {
   }
 }
 
-// Input validation
-function validateInput() {
-  sessionInput.value = sessionInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-}
-
 // Event listeners
-sessionInput.addEventListener('input', validateInput);
-sessionInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') connectToSession();
+sessionInput.addEventListener('input', function() { 
+  this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
 });
 
-connectBtn.addEventListener('click', connectToSession);
-disconnectBtn.addEventListener('click', disconnect);
-debugBtn.addEventListener('click', toggleDebug);
-fullscreenBtn.addEventListener('click', toggleFullscreen);
+sessionInput.addEventListener('keypress', (e) => { 
+  if (e.key === 'Enter') { 
+    joinSession(); 
+  } 
+});
 
-// Mobile-specific event handlers
-if (isMobile) {
-  // Handle page visibility changes
+joinBtn.onclick = joinSession;
+disconnectBtn.onclick = disconnect;
+toggleIceBtn.onclick = toggleIceDebug;
+fullscreenBtn.onclick = toggleFullscreen;
+
+// Initialize video element
+setupVideoElement();
+
+// Handle page visibility changes (mobile background/foreground)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && currentPC && remoteVideo.srcObject) {
+    logIce('Page became visible, ensuring video plays');
+    remoteVideo.play().catch(e => logIce('Visibility play failed: ' + e.message));
+  }
+});
+
+// Handle mobile orientation changes
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (remoteVideo.srcObject) {
+      remoteVideo.play().catch(e => logIce('Orientation play failed: ' + e.message));
+    }
+  }, 500);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', disconnect);
+
+// User interaction handler for mobile autoplay
+let userInteracted = false;
+function handleUserInteraction() {
+  if (!userInteracted) {
+    userInteracted = true;
+    logIce('User interaction detected');
+    if (remoteVideo.srcObject && remoteVideo.paused) {
+      remoteVideo.play().then(() => {
+        logIce('Video resumed after user interaction');
+        // Remove controls after successful play on iOS
+        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+          setTimeout(() => {
+            remoteVideo.controls = false;
+          }, 2000);
+        }
+      }).catch(e => logIce('User interaction play failed: ' + e.message));
+    }
+  }
+}
+
+document.addEventListener('touchstart', handleUserInteraction);
+document.addEventListener('click', handleUserInteraction);
+
+// iOS specific workarounds
+if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+  logIce('iOS device detected, applying iOS-specific workarounds');
+  
+  // Handle iOS app state changes
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && remoteVideo.srcObject && remoteVideo.paused) {
-      log('Page visible, attempting video play');
-      playVideo('visibility change');
+    if (!document.hidden && remoteVideo.srcObject) {
+      logIce('iOS: App became visible, checking video state');
+      setTimeout(() => {
+        if (remoteVideo.paused) {
+          logIce('iOS: Video paused, attempting to resume');
+          remoteVideo.play().catch(e => logIce('iOS: Resume failed: ' + e.message));
+        }
+      }, 500);
     }
   });
   
-  // Handle orientation changes
-  window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-      if (remoteVideo.srcObject) {
-        playVideo('orientation change');
-      }
-    }, 500);
+  // Handle iOS Safari specific events
+  window.addEventListener('pageshow', () => {
+    if (remoteVideo.srcObject && remoteVideo.paused) {
+      logIce('iOS: Page shown, attempting video play');
+      remoteVideo.play().catch(e => logIce('iOS: Page show play failed: ' + e.message));
+    }
   });
-  
-  // Handle iOS-specific events
-  if (isIOS) {
-    window.addEventListener('pageshow', (e) => {
-      if (e.persisted && remoteVideo.srcObject) {
-        log('iOS pageshow event');
-        playVideo('pageshow');
-      }
-    });
-    
-    // Use pagehide instead of beforeunload for iOS
-    window.addEventListener('pagehide', disconnect);
-  } else {
-    window.addEventListener('beforeunload', disconnect);
-  }
-} else {
-  window.addEventListener('beforeunload', disconnect);
 }
-
-// Global user interaction handler
-document.addEventListener('click', () => {
-  if (remoteVideo.srcObject && remoteVideo.paused) {
-    playVideo('global click');
-  }
-});
 
 // Initialize
-function initialize() {
-  log('Initializing Universal Screen Viewer');
-  checkBrowserCompatibility();
-  setupVideo();
-  
-  // Auto-focus on input for desktop
-  if (!isMobile) {
-    sessionInput.focus();
-  }
-  
-  log(`Initialized - Mobile: ${isMobile}, iOS: ${isIOS}, Safari: ${isSafari}`);
-}
+logIce(`Viewer initialized (Mobile: ${isMobile}, User Agent: ${navigator.userAgent.substring(0, 50)}...)`);
 
-// Start the application
-initialize();
+// Display device info for debugging
+if (isMobile) {
+  deviceInfo.innerHTML = `
+    Mobile Device Detected<br>
+    ${navigator.userAgent.includes('iPhone') ? 'iOS Safari' : 'Android Chrome'}<br>
+    Audio: Muted | Playsinline: Enabled
+  `;
+}
+</script>
+</body>
+</html>
