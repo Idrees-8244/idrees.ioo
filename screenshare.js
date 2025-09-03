@@ -13,20 +13,20 @@ const pcConfig = {
     { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.stunprotocol.org:3478' },
     { urls: 'stun:stun.cloudflare.com:3478' },
-    { 
-      urls: 'turn:openrelay.metered.ca:80', 
-      username: 'openrelayproject', 
-      credential: 'openrelayproject' 
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
     },
-    { 
-      urls: 'turn:openrelay.metered.ca:443', 
-      username: 'openrelayproject', 
-      credential: 'openrelayproject' 
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
     },
-    { 
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp', 
-      username: 'openrelayproject', 
-      credential: 'openrelayproject' 
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
     },
     {
       urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
@@ -42,14 +42,21 @@ const pcConfig = {
   iceCandidatePoolSize: 10,
   iceTransportPolicy: 'all',
   bundlePolicy: 'max-bundle',
-  rtcpMuxPolicy: 'require'
+  rtcpMuxPolicy: 'require',
+  sdpSemantics: 'unified-plan'
 };
 
-// ----- AGENT -----
-async function startSharing(sessionCode) {
-  localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-  const previewEl = document.getElementById('preview');
-  if (previewEl) previewEl.srcObject = localStream;
+function generateSessionCode() {
+  return Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+// ----- HOST -----
+export async function startScreenShare() {
+  const sessionCode = generateSessionCode();
+  const sessionCodeDisplay = document.getElementById('sessionCode');
+  const preview = document.getElementById('preview');
+
+  if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionCode;
 
   hostPC = new RTCPeerConnection(pcConfig);
 
@@ -60,41 +67,99 @@ async function startSharing(sessionCode) {
     }
   };
 
-  localStream.getTracks().forEach(track => hostPC.addTrack(track, localStream));
+  // Crucial change: The negotiation logic is now in this event handler
+  hostPC.onnegotiationneeded = async () => {
+    try {
+      const offer = await hostPC.createOffer({
+        offerToReceiveVideo: false,
+        offerToReceiveAudio: false
+      });
+      await hostPC.setLocalDescription(offer);
 
-  const offer = await hostPC.createOffer();
-  await hostPC.setLocalDescription(offer);
-  await set(ref(db, `signaling/${sessionCode}/offer`), {
-    sdp: offer.sdp,
-    type: offer.type
-  });
+      await set(ref(db, `signaling/${sessionCode}/offer`), {
+        sdp: offer.sdp,
+        type: offer.type
+      });
 
-  const answerRef = ref(db, `signaling/${sessionCode}/answer`);
-  onValue(answerRef, async (snap) => {
-    const val = snap.val();
-    if (val && hostPC && !hostPC.remoteDescription) {
-      await hostPC.setRemoteDescription(new RTCSessionDescription(val));
+      console.log('Offer created and sent to Firebase.');
+    } catch (error) {
+      console.error('Error during negotiation:', error);
     }
-  });
+  };
 
-  const viewerCandidatesRef = ref(db, `signaling/${sessionCode}/viewerCandidates`);
-  onChildAdded(viewerCandidatesRef, async (snap) => {
-    const val = snap.val();
-    if (val) {
-      await hostPC.addIceCandidate(new RTCIceCandidate(val));
+  hostPC.onconnectionstatechange = () => {
+    console.log(`Host connection state: ${hostPC.connectionState}`);
+  };
+
+  try {
+    localStream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: false
+    });
+
+    if (preview) {
+      preview.srcObject = localStream;
+      preview.muted = true;
+      preview.play().catch(e => console.error('Preview play failed:', e));
     }
-  });
 
-  console.log('Screen sharing started. Code:', sessionCode);
+    localStream.getTracks().forEach(track => {
+      hostPC.addTrack(track, localStream);
+    });
+
+    onValue(ref(db, `signaling/${sessionCode}/answer`), async (snap) => {
+      const answer = snap.val();
+      if (answer) {
+        await hostPC.setRemoteDescription(new RTCSessionDescription(answer));
+        console.log('Answer received and set.');
+      }
+    }, { onlyOnce: true });
+
+    onChildAdded(ref(db, `signaling/${sessionCode}/viewerCandidates`), async (snap) => {
+      const val = snap.val();
+      if (val) {
+        await hostPC.addIceCandidate(new RTCIceCandidate(val));
+      }
+    });
+
+    console.log('Screen sharing started. Code:', sessionCode);
+    return sessionCode;
+  } catch (error) {
+    console.error('Error starting screen share:', error);
+    if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      alert("Permission to share your screen was denied. Please allow it and try again.");
+    }
+    return null;
+  }
+}
+
+export function stopScreenShare() {
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
+  if (hostPC) {
+    hostPC.close();
+  }
+  localStream = null;
+  hostPC = null;
+  console.log('Screen sharing stopped.');
 }
 
 // ----- VIEWER -----
-async function joinSession(sessionCode) {
+export async function joinSession(sessionCode) {
+  if (!sessionCode) return alert('Session code is required.');
+
   viewerPC = new RTCPeerConnection(pcConfig);
 
+  // Simplified ontrack handler due to host side fixes
   viewerPC.ontrack = (evt) => {
     const remoteVideo = document.getElementById('remoteVideo');
-    if (remoteVideo) remoteVideo.srcObject = evt.streams[0];
+    if (remoteVideo) {
+      console.log('Viewer received stream track.');
+      remoteVideo.srcObject = evt.streams[0];
+      // Attempt play immediately, as the stream should now be valid
+      remoteVideo.play().catch(e => console.error('Auto-play failed:', e));
+    }
   };
 
   viewerPC.onicecandidate = (evt) => {
@@ -104,25 +169,41 @@ async function joinSession(sessionCode) {
     }
   };
 
-  const offerSnap = await get(ref(db, `signaling/${sessionCode}/offer`));
-  const offerVal = offerSnap.val();
-  if (!offerVal) return alert('No active session with that code.');
-  await viewerPC.setRemoteDescription(new RTCSessionDescription(offerVal));
+  try {
+    const offerSnap = await get(ref(db, `signaling/${sessionCode}/offer`));
+    const offerVal = offerSnap.val();
+    if (!offerVal) return alert('No active session with that code.');
 
-  const answer = await viewerPC.createAnswer();
-  await viewerPC.setLocalDescription(answer);
-  await set(ref(db, `signaling/${sessionCode}/answer`), {
-    sdp: answer.sdp,
-    type: answer.type
-  });
+    await viewerPC.setRemoteDescription(new RTCSessionDescription(offerVal));
 
-  const hostCandidatesRef = ref(db, `signaling/${sessionCode}/hostCandidates`);
-  onChildAdded(hostCandidatesRef, async (snap) => {
-    const val = snap.val();
-    if (val) {
-      await hostPC.addIceCandidate(new RTCIceCandidate(val));
-    }
-  });
+    const answer = await viewerPC.createAnswer();
+    await viewerPC.setLocalDescription(answer);
+    await set(ref(db, `signaling/${sessionCode}/answer`), {
+      sdp: answer.sdp,
+      type: answer.type
+    });
 
-  console.log('Joined session:', sessionCode);
+    onChildAdded(ref(db, `signaling/${sessionCode}/hostCandidates`), async (snap) => {
+      const val = snap.val();
+      if (val) {
+        await viewerPC.addIceCandidate(new RTCIceCandidate(val));
+      }
+    });
+
+    console.log('Joined session:', sessionCode);
+  } catch (error) {
+    console.error('Error joining session:', error);
+    alert('Failed to join session. Check the code and try again.');
+  }
+}
+
+export function disconnect() {
+  if (viewerPC) {
+    viewerPC.close();
+    viewerPC = null;
+  }
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
+  localStream = null;
 }
