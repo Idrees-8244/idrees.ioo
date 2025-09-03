@@ -306,18 +306,12 @@
     let currentPC = null;
     let currentSessionCode = null;
     let iceDebug = false;
-    let reconnectionTimeout = null;
-    let iceReconnectAttempts = 0;
-    const maxIceReconnects = 3;
 
     const pcConfig = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        { urls: 'stun:stun.stunprotocol.org:3478' },
         { urls: 'stun:stun.cloudflare.com:3478' },
         {
           urls: 'turn:openrelay.metered.ca:80',
@@ -340,9 +334,9 @@
           credential: 'webrtc'
         },
         {
-          urls: 'turn:relay1.expressturn.com:3478',
-          username: 'efTAJF7M2TAqVIBR3T',
-          credential: 'uxXXDrkXYdkVBdkl'
+          urls: 'turn:relay.anyfirewall.com:3478',
+          username: 'webrtc',
+          credential: 'webrtc'
         }
       ],
       iceCandidatePoolSize: 10,
@@ -413,14 +407,13 @@
     }
 
     function setupVideoElement() {
-      remoteVideo.muted = false; // We want sound, so we will manage play with user interaction
+      remoteVideo.muted = false;
       remoteVideo.playsInline = true;
-      remoteVideo.autoplay = false; // Autoplay is unreliable on mobile, so we disable it
+      remoteVideo.autoplay = false;
       remoteVideo.setAttribute('playsinline', 'true');
       remoteVideo.setAttribute('webkit-playsinline', 'true');
       remoteVideo.defaultMuted = false;
 
-      // Handle the "Tap to Play" logic
       const playHandler = (e) => {
         e.preventDefault();
         logStatus('User interaction detected on video element.');
@@ -428,7 +421,7 @@
           handleVideoPlay();
         }
       };
-      
+
       playPrompt.addEventListener('click', playHandler);
       playPrompt.addEventListener('touchstart', playHandler);
       videoContainer.addEventListener('click', playHandler);
@@ -456,36 +449,33 @@
       });
     }
 
-    async function connectToSession(code) {
+    async function connectToSession() {
+      const code = sessionInput.value.trim().toUpperCase();
+      if (!code || code.length !== 6) {
+        showError("Please enter a valid 6-digit session code");
+        return;
+      }
+
       showLoading(true);
       updateStatus('connecting', 'Finding your session...');
       try {
         currentPC = new RTCPeerConnection(pcConfig);
         currentSessionCode = code;
-        iceReconnectAttempts = 0;
 
         currentPC.oniceconnectionstatechange = () => {
           const state = currentPC.iceConnectionState;
           logStatus(`ICE connection state: ${state}`);
           switch (state) {
-            case 'checking':
-              updateStatus('connecting', 'Checking connectivity...');
-              break;
             case 'connected':
             case 'completed':
               updateStatus('connected', 'Connected');
               break;
             case 'disconnected':
               updateStatus('connecting', 'Reconnecting...');
-              if (iceReconnectAttempts < maxIceReconnects) {
-                logStatus('Attempting ICE restart...');
-                currentPC.restartIce();
-                iceReconnectAttempts++;
-              }
               break;
             case 'failed':
               updateStatus('error', 'Connection failed');
-              showError('Connection failed. Please check network or reload.');
+              showError('Connection failed. Please check your network or try again.');
               break;
           }
         };
@@ -504,7 +494,7 @@
             showVideoContainer();
             remoteVideo.srcObject = stream;
             updateStatus('connecting', 'Stream Ready');
-            handleVideoPlay(); // Attempt to play the video with our robust handler
+            handleVideoPlay();
           } else {
             logStatus('No video track found in stream.');
             updateStatus('error', 'Stream Error');
@@ -513,7 +503,6 @@
           showLoading(false);
         };
         
-        // Fetch offer and set remote description
         const offerSnap = await get(ref(db, `signaling/${code}/offer`));
         const offerVal = offerSnap.val();
         if (!offerVal) {
@@ -521,10 +510,9 @@
         }
         await currentPC.setRemoteDescription(new RTCSessionDescription(offerVal));
 
-        // Create and send answer
         const answer = await currentPC.createAnswer({
           offerToReceiveVideo: true,
-          offerToReceiveAudio: true // Requesting audio too
+          offerToReceiveAudio: true
         });
         await currentPC.setLocalDescription(answer);
         await set(ref(db, `signaling/${code}/answer`), {
@@ -532,7 +520,6 @@
           type: answer.type
         });
         
-        // Listen for ICE candidates from the host
         onChildAdded(ref(db, `signaling/${code}/hostCandidates`), async (snap) => {
           if (currentPC && snap.val()) {
             try {
@@ -604,11 +591,11 @@
 
     sessionInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        connectToSession(sessionInput.value.trim().toUpperCase());
+        connectToSession();
       }
     });
 
-    joinBtn.onclick = () => connectToSession(sessionInput.value.trim().toUpperCase());
+    joinBtn.onclick = connectToSession;
     disconnectBtn.onclick = disconnect;
     toggleIceBtn.onclick = toggleIceDebug;
     fullscreenBtn.onclick = toggleFullscreen;
