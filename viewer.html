@@ -77,10 +77,10 @@
     .plane-icon:nth-child(5) { top: 65%; left: 110%; animation-duration: 28s; animation-delay: 8s; }
 
     @keyframes fly {
-      0% { transform: translateX(-100vw) rotateZ(0deg); opacity: 0; }
+      0% { transform: translateX(-100vw) rotateZ(0deg); opacity: 10; }
       10% { opacity: 0.8; }
       90% { opacity: 0.8; }
-      100% { transform: translateX(100vw) rotateZ(0deg); opacity: 0; }
+      100% { transform: translateX(100vw) rotateZ(0deg); opacity: 10; }
     }
     /* End Animated background elements */
 
@@ -429,7 +429,7 @@
 
     function showLoading(show) {
       joinBtn.disabled = show;
-      joinBtn.textContent = show ? 'Connecting...' : '<i class="fas fa-play"></i> Join Session';
+      joinBtn.textContent = show ? 'Connecting...' : 'Connected';
     }
 
     function updateStatus(status, text) {
@@ -675,3 +675,17 @@
   </script>
 </body>
 </html>
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/689782258b3b22192a593919/1j27t8oof';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
